@@ -8,6 +8,8 @@ from baselines.deepq.replay_buffer import ReplayBuffer
 
 def main():
     env = gym.make('CartPole-v0')
+    print('Observation space:', env.observation_space)
+    print('Action space:', env.action_space)
     while True:
         obs_t = env.reset()
         while True:
@@ -17,7 +19,7 @@ def main():
 
             if done:
                 break
-            obs_t = obs_tp0
+            obs_t = obs_tp1
 
 
 if __name__ == '__main__':
