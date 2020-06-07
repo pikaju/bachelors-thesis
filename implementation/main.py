@@ -3,9 +3,12 @@ import gym
 
 from gym import envs
 
+from baselines.deepq.replay_buffer import ReplayBuffer
+
 
 def main():
-    print(tf.add(tf.constant(2), tf.constant(3)))
+    env = gym.make('CartPole-v0')
+    env.reset()
 
 
 if __name__ == '__main__':
