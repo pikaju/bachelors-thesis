@@ -14,21 +14,21 @@ class MuZero:
         policy, value = self.prediction(state)
         return policy, value, reward
 
-    def loss(self, observations, actions, rewards, next_observations, discount, loss_r, loss_v, loss_p):
+    def loss(self, obs_t, actions, rewards, obs_tp1, done, discount, loss_r, loss_v, loss_p):
         loss = 0
-        state = self.representation(observations[0])
+        state = self.representation(obs_t[0])
 
         _, bootstrapped_value = self.prediction(
-            self.representation(next_observations[-1]))
+            self.representation(obs_tp1[-1]))
         z = []
         for i in range(len(rewards)):
             z_i = 0
             for j in range(i, len(rewards)):
                 z_i += discount ** j * rewards[i]
-            z_i += discount ** len(rewards) * bootstrapped_value
+            z_i += discount ** len(rewards) * bootstrapped_value * (1 - done)
             z.append(z_i)
 
-        for _, action, true_reward, _, z_k in zip(observations, actions, rewards, next_observations, z):
+        for _, action, true_reward, _, z_k in zip(obs_t, actions, rewards, obs_tp1, z):
             reward, state = self.dynamics(state, action)
             policy, value = self.prediction(state)
 
