@@ -24,8 +24,8 @@ class MuZeroBase:
         for i in range(len(rewards)):
             z_i = 0
             for j in range(i, len(rewards)):
-                z_i += discount ** j * rewards[i]
-            z_i += discount ** len(rewards) * bootstrapped_value
+                z_i += discount ** (j - i) * rewards[j]
+            z_i += discount ** (len(rewards) - i) * bootstrapped_value
             z.append(z_i)
 
         for _, action, true_reward, _, z_k in zip(obs_t, actions, rewards, obs_tp1, z):
@@ -34,7 +34,6 @@ class MuZeroBase:
 
             policy, value = self.prediction(state)
             reward, state = self.dynamics(state, action)
-            # print(policy, action)
 
             losses.append(loss_r(true_reward, reward) +
                           loss_v(z_k, value) + loss_p(action, policy))
@@ -65,6 +64,7 @@ class MuZeroPSO(MuZeroBase):
                 action_sequence.append(action[0])
                 _, state = self.dynamics(state, action)
 
+            _, value = self.prediction(state)
             value = value.numpy()
             if best_value is None or best_value < value[0]:
                 best_action_sequence = action_sequence

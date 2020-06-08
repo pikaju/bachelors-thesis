@@ -16,8 +16,8 @@ state_shape = 4
 def define_representation(env):
     obs_shape = env.observation_space.shape
     representation = tf.keras.Sequential([
-        tf.keras.layers.Dense(8, activation=tf.nn.relu, input_shape=obs_shape),
-        tf.keras.layers.Dense(state_shape, activation=tf.nn.relu),
+        tf.keras.layers.Dense(8, activation=tf.nn.tanh, input_shape=obs_shape),
+        tf.keras.layers.Dense(state_shape, activation=tf.nn.tanh),
     ], name='representation')
     return representation, representation.trainable_variables
 
@@ -28,14 +28,14 @@ def define_model(env):
     action_shape = env.action_space.n
 
     dynamics_trunk = tf.keras.Sequential([
-        tf.keras.layers.Dense(state_shape, activation=tf.nn.relu,
+        tf.keras.layers.Dense(state_shape, activation=tf.nn.tanh,
                               input_shape=(state_shape + action_shape,)),
     ])
     dynamics_reward_head = tf.keras.Sequential([
         tf.keras.layers.Dense(1),
     ])
     dynamics_state_head = tf.keras.Sequential([
-        tf.keras.layers.Dense(state_shape, activation=tf.nn.relu),
+        tf.keras.layers.Dense(state_shape),
     ])
     dynamics_reward_path = tf.keras.Sequential(
         [dynamics_trunk, dynamics_reward_head], name='dynamics_reward')
@@ -48,7 +48,7 @@ def define_model(env):
         return (tf.reshape(dynamics_reward_path(state_action), [-1]), dynamics_state_path(state_action))
 
     prediction_trunk = tf.keras.Sequential([
-        tf.keras.layers.Dense(state_shape, activation=tf.nn.relu,
+        tf.keras.layers.Dense(state_shape, activation=tf.nn.tanh,
                               input_shape=(state_shape,)),
     ])
     prediction_policy_head = tf.keras.Sequential([
@@ -79,7 +79,7 @@ def define_model(env):
     return representation, dynamics, prediction, action_sampler, variables
 
 
-def define_losses():
+def define_losses(variables):
     def loss_r(true, pred):
         return tf.losses.MSE(true, pred)
 
@@ -87,7 +87,7 @@ def define_losses():
         return tf.losses.MSE(true, pred)
 
     def loss_p(action, logits):
-        return tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(action, logits))
+        return tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(action, logits)) * 0.1
 
     return loss_r, loss_v, loss_p
 
@@ -98,11 +98,11 @@ def main():
     print('Observation space:', env.observation_space)
     print('Action space:', env.action_space)
 
-    replay_buffer = ReplayBuffer(64)
+    replay_buffer = ReplayBuffer(16)
 
     representation, dynamics, prediction, action_sampler, variables = define_model(
         env)
-    loss_r, loss_v, loss_p = define_losses()
+    loss_r, loss_v, loss_p = define_losses(variables)
     muzero = MuZeroPSO(representation, dynamics, prediction)
 
     optimizer = tf.optimizers.Adam()
@@ -125,12 +125,12 @@ def main():
 
         # Training phase
         losses = []
-        batch = replay_buffer.sample(16, 4)
+        batch = replay_buffer.sample(16, 3)
         for sample in batch:
             obs, actions, rewards, obs_tp1, dones = zip(*sample)
             with tf.GradientTape() as tape:
                 loss = muzero.loss(obs, actions, rewards, obs_tp1,
-                                   dones[0], discount_factor, loss_r, loss_v, loss_p)
+                                   dones[-1], discount_factor, loss_r, loss_v, loss_p)
                 losses.append(loss)
             gradients = tape.gradient(loss, variables)
             optimizer.apply_gradients(zip(gradients, variables))

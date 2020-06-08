@@ -7,7 +7,6 @@ class ReplayBuffer:
         self.episodes = []
 
     def begin_episode(self):
-        print(len(self.episodes))
         self.current_episode = []
         self.episodes.append(self.current_episode)
         if len(self.episodes) > self.size:
