@@ -16,11 +16,11 @@ class MuZeroBase:
         return policy, value, reward
 
     def loss(self, obs_t, actions, rewards, obs_tp1, done, discount, loss_r, loss_v, loss_p):
-        loss = 0
-        state = self.representation(obs_t[0])
+        losses = []
+        state = self.representation(np.array([obs_t[0]]))
 
-        _, bootstrapped_value = self.prediction(
-            self.representation(obs_tp1[-1]))
+        bootstrapped_value = self.prediction(
+            self.representation(obs_tp1))[1]
         z = []
         for i in range(len(rewards)):
             z_i = 0
@@ -30,11 +30,17 @@ class MuZeroBase:
             z.append(z_i)
 
         for _, action, true_reward, _, z_k in zip(obs_t, actions, rewards, obs_tp1, z):
+            action = np.array([action])
+            true_reward = np.array([true_reward])
+            print(bootstrapped_value, z_k)
+
             reward, state = self.dynamics(state, action)
             policy, value = self.prediction(state)
 
-            loss += loss_r(true_reward, reward) + \
-                loss_v(z_k, value) + loss_p(action, policy)
+            losses.append(loss_r(true_reward, reward) +
+                          loss_v(z_k, value) + loss_p(action, policy))
+
+        return tf.reduce_mean(losses)
 
 
 class MuZeroPSO(MuZeroBase):
@@ -45,12 +51,17 @@ class MuZeroPSO(MuZeroBase):
         obs = np.array([obs])
         initial_state = self.representation(obs)
         best_action_sequence, best_value = None, None
+        print('Starting planning...')
         for _ in range(num_particles):
             state = initial_state
             action_sequence = []
             for _ in range(depth):
+                print('Iteration:')
+                print('State:', state)
                 policy, value = self.prediction(state)
+                print('Policy:', policy, '    Value:', value)
                 action = action_sampler(policy)
+                print('Action:', action)
                 action_sequence.append(action[0])
                 _, state = self.dynamics(state, action)
             if best_value is None or best_value < value[0]:

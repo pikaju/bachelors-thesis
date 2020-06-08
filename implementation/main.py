@@ -17,14 +17,13 @@ def define_representation(env):
         tf.keras.layers.Dense(8, activation=tf.nn.relu, input_shape=obs_shape),
         tf.keras.layers.Dense(state_shape, activation=tf.nn.relu),
     ], name='representation')
-    return representation
+    return representation, representation.trainable_variables
 
 
 def define_model(env):
-    representation = define_representation(env)
+    representation, representation_variables = define_representation(env)
 
     action_shape = env.action_space.n
-    print(action_shape)
 
     dynamics_trunk = tf.keras.Sequential([
         tf.keras.layers.Dense(state_shape, activation=tf.nn.relu,
@@ -43,18 +42,18 @@ def define_model(env):
 
     def dynamics(state, action):
         action = tf.one_hot(action, action_shape)
-        state_action = np.hstack((state, action))
-        return (dynamics_reward_path(state_action), dynamics_state_path(state_action))
+        state_action = tf.concat((state, action), axis=1)
+        return (tf.reshape(dynamics_reward_path(state_action), [-1]), dynamics_state_path(state_action))
 
     prediction_trunk = tf.keras.Sequential([
         tf.keras.layers.Dense(state_shape, activation=tf.nn.relu,
                               input_shape=(state_shape,)),
     ])
     prediction_policy_head = tf.keras.Sequential([
-        tf.keras.layers.Dense(action_shape, activation=tf.nn.softmax)
+        tf.keras.layers.Dense(action_shape)
     ])
     prediction_value_head = tf.keras.Sequential([
-        tf.keras.layers.Dense(action_shape)
+        tf.keras.layers.Dense(1)
     ])
     prediction_policy_path = tf.keras.Sequential(
         [prediction_trunk, prediction_policy_head], name='prediction_policy')
@@ -67,32 +66,72 @@ def define_model(env):
     def action_sampler(policy):
         return tf.argmax(tf.random.categorical(policy, num_samples=1), axis=-1)
 
-    return representation, dynamics, prediction, action_sampler
+    variables = [
+        *representation_variables,
+        *dynamics_reward_path.trainable_variables,
+        *dynamics_state_path.trainable_variables,
+        *prediction_policy_path.trainable_variables,
+        *prediction_value_path.trainable_variables,
+    ]
+
+    return representation, dynamics, prediction, action_sampler, variables
+
+
+def define_losses():
+    def loss_r(true, pred):
+        return tf.losses.MSE(true, pred)
+
+    def loss_v(true, pred):
+        return tf.losses.MSE(true, pred)
+
+    def loss_p(action, logits):
+        return tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(action, logits))
+
+    return loss_r, loss_v, loss_p
 
 
 def main():
     env = gym.make('CartPole-v0')
+    discount_factor = 0.8
     print('Observation space:', env.observation_space)
     print('Action space:', env.action_space)
 
     replay_buffer = ReplayBuffer(4096)
 
-    representation, dynamics, prediction, action_sampler = define_model(env)
+    representation, dynamics, prediction, action_sampler, variables = define_model(
+        env)
+    loss_r, loss_v, loss_p = define_losses()
     muzero = MuZeroPSO(representation, dynamics, prediction)
+
+    optimizer = tf.optimizers.Adam()
 
     while True:
         obs_t = env.reset()
         while True:
             env.render()
 
-            action = muzero.plan(obs_t, action_sampler)[0][0]
+            action = muzero.plan(obs_t, action_sampler,
+                                 num_particles=1, depth=1)[0][0].numpy()
 
-            obs_tp1, reward, done, _ = env.step(action.numpy())
+            obs_tp1, reward, done, _ = env.step(action)
             replay_buffer.add(obs_t, action, reward, obs_tp1, done)
 
             if done:
                 break
             obs_t = obs_tp1
+
+        # Training phase
+        losses = []
+        for _ in range(64):
+            obs, actions, rewards, obs_tp1, dones = replay_buffer.sample(
+                1)
+            with tf.GradientTape() as tape:
+                loss = muzero.loss(obs, actions, rewards, obs_tp1,
+                                   dones[0], discount_factor, loss_r, loss_v, loss_p)
+                losses.append(loss)
+            gradients = tape.gradient(loss, variables)
+            optimizer.apply_gradients(zip(gradients, variables))
+        print('Loss:', tf.reduce_mean(losses).numpy())
 
 
 if __name__ == '__main__':
