@@ -1,7 +1,8 @@
 import tensorflow as tf
+import numpy as np
 
 
-class MuZero:
+class MuZeroBase:
     def __init__(self, representation, dynamics, prediction):
         self.representation = representation
         self.dynamics = dynamics
@@ -36,11 +37,12 @@ class MuZero:
                 loss_v(z_k, value) + loss_p(action, policy)
 
 
-class ContinuousMuZero(MuZero):
+class MuZeroPSO(MuZeroBase):
     def __init__(self, representation, dynamics, prediction):
         super().__init__(representation, dynamics, prediction)
 
-    def plan(self, obs, action_sampler, num_particles=16, depth=8):
+    def plan(self, obs, action_sampler, num_particles=4, depth=4):
+        obs = np.array([obs])
         initial_state = self.representation(obs)
         best_action_sequence, best_value = None, None
         for _ in range(num_particles):
@@ -49,9 +51,9 @@ class ContinuousMuZero(MuZero):
             for _ in range(depth):
                 policy, value = self.prediction(state)
                 action = action_sampler(policy)
-                action_sequence.append(action)
+                action_sequence.append(action[0])
                 _, state = self.dynamics(state, action)
-            if best_value is None or best_value < value:
+            if best_value is None or best_value < value[0]:
                 best_action_sequence = action_sequence
-                best_value = value
+                best_value = value[0]
         return best_action_sequence, best_value
