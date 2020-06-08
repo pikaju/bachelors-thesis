@@ -48,21 +48,16 @@ class MuZeroPSO(MuZeroBase):
     def plan(self, obs, action_sampler, num_particles=4, depth=4):
         obs = tf.expand_dims(obs, 0)
         initial_state = self.representation(obs)
-        best_action_sequence, best_value = None, None
+        state = tf.repeat(initial_state, repeats=[num_particles], axis=0)
 
-        for _ in range(num_particles):
-            state = initial_state
-            action_sequence = []
-            for _ in range(depth):
-                policy, value = self.prediction(state)
-                action = action_sampler(policy)
-                action_sequence.append(action[0])
-                _, state = self.dynamics(state, action)
+        actions = []
+        for _ in range(depth):
+            policy, value = self.prediction(state)
+            action = action_sampler(policy)
+            actions.append(action)
+            _, state = self.dynamics(state, action)
 
-            _, value = self.prediction(state)
-            value = value.numpy()
-            if best_value is None or best_value < value[0]:
-                best_action_sequence = action_sequence
-                best_value = value[0]
+        _, value = self.prediction(state)
+        best_index = tf.argmax(value)
 
-        return best_action_sequence, best_value
+        return [action[best_index] for action in actions], value[best_index]

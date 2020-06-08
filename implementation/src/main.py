@@ -114,9 +114,7 @@ def main():
             env.render()
 
             action = muzero.plan(obs_t, action_sampler,
-                                 num_particles=8, depth=2)[0][0].numpy()
-            if attempt < 16:
-                action = env.action_space.sample()
+                                 num_particles=64, depth=2)[0][0].numpy()
 
             obs_tp1, reward, done, _ = env.step(action)
             replay_buffer.add(obs_t, action, reward, obs_tp1, done)
