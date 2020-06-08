@@ -7,8 +7,11 @@ class ReplayBuffer:
         self.episodes = []
 
     def begin_episode(self):
+        print(len(self.episodes))
         self.current_episode = []
         self.episodes.append(self.current_episode)
+        if len(self.episodes) > self.size:
+            self.episodes = self.episodes[1:]
 
     def add(self, obs_t, action, reward, obs_tp1, done):
         self.current_episode.append((
@@ -20,7 +23,7 @@ class ReplayBuffer:
         ))
 
     def _sample_from(self, episode, iterations):
-        start = random.randrange(0, len(episode) - iterations)
+        start = random.randrange(0, len(episode) - iterations + 1)
         return episode[start:start+iterations]
 
     def sample(self, batch_size, iterations):
