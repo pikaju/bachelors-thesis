@@ -87,7 +87,7 @@ def define_losses(variables):
         return tf.losses.MSE(true, pred)
 
     def loss_p(action, logits):
-        return tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(action, logits)) * 0.1
+        return tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(action, logits)) * 0.2
 
     return loss_r, loss_v, loss_p
 
@@ -98,7 +98,7 @@ def main():
     print('Observation space:', env.observation_space)
     print('Action space:', env.action_space)
 
-    replay_buffer = ReplayBuffer(16)
+    replay_buffer = ReplayBuffer(64)
 
     representation, dynamics, prediction, action_sampler, variables = define_model(
         env)
@@ -109,12 +109,11 @@ def main():
 
     while True:
         obs_t = env.reset()
-        replay_buffer.begin_episode()
         while True:
             env.render()
 
             action = muzero.plan(obs_t, action_sampler,
-                                 num_particles=4, depth=2)[0][0].numpy()
+                                 num_particles=8, depth=2)[0][0].numpy()
 
             obs_tp1, reward, done, _ = env.step(action)
             replay_buffer.add(obs_t, action, reward, obs_tp1, done)
