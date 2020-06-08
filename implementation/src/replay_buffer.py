@@ -15,14 +15,14 @@ class ReplayBuffer:
             done
         ))
         if len(self._storage) > self.size:
-            self._storage = self._storage[1:]
+            self._storage.pop(0)
 
     def _sample_single(self, max_iterations):
         start = random.randrange(0, len(self._storage))
-        end = start
-        while not self._storage[end][-1] and end < len(self._storage) - 1 and (end - start) < max_iterations:
-            end += 1
-        return self._storage[start:end+1]
+        stop = start + 1
+        while not self._storage[stop - 1][-1] and stop < len(self._storage) and (stop - start) < max_iterations:
+            stop += 1
+        return self._storage[start:stop]
 
     def sample(self, batch_size, max_iterations):
         return [self._sample_single(max_iterations) for _ in range(batch_size)]
