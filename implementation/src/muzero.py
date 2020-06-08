@@ -49,18 +49,13 @@ class MuZeroPSO(MuZeroBase):
         obs = tf.expand_dims(obs, 0)
         initial_state = self.representation(obs)
         best_action_sequence, best_value = None, None
-        # print('Starting planning...')
+
         for _ in range(num_particles):
             state = initial_state
             action_sequence = []
             for _ in range(depth):
-                # print('Iteration:')
-                # print('State:', state)
                 policy, value = self.prediction(state)
-                # print('Policy:', policy, '    Value:', value)
                 action = action_sampler(policy)
-                # print('Action:', action)
-                # print('Value:', value)
                 action_sequence.append(action[0])
                 _, state = self.dynamics(state, action)
 
