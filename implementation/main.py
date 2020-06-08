@@ -87,7 +87,7 @@ def define_losses(variables):
         return tf.losses.MSE(true, pred)
 
     def loss_p(action, logits):
-        return tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(action, logits)) * 0.2
+        return tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(action, logits)) * 0.05
 
     return loss_r, loss_v, loss_p
 
@@ -98,7 +98,7 @@ def main():
     print('Observation space:', env.observation_space)
     print('Action space:', env.action_space)
 
-    replay_buffer = ReplayBuffer(64)
+    replay_buffer = ReplayBuffer(1024)
 
     representation, dynamics, prediction, action_sampler, variables = define_model(
         env)
@@ -134,6 +134,7 @@ def main():
             gradients = tape.gradient(loss, variables)
             optimizer.apply_gradients(zip(gradients, variables))
         print('Loss:', tf.reduce_mean(losses).numpy())
+        print('Replay buffer size:', len(replay_buffer))
 
 
 if __name__ == '__main__':

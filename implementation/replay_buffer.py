@@ -26,3 +26,6 @@ class ReplayBuffer:
 
     def sample(self, batch_size, max_iterations):
         return [self._sample_single(max_iterations) for _ in range(batch_size)]
+
+    def __len__(self):
+        return len(self._storage)
