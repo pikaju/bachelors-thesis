@@ -107,6 +107,7 @@ def main():
 
     optimizer = tf.optimizers.Adam()
 
+    attempt = 0
     while True:
         obs_t = env.reset()
         while True:
@@ -114,6 +115,8 @@ def main():
 
             action = muzero.plan(obs_t, action_sampler,
                                  num_particles=8, depth=2)[0][0].numpy()
+            if attempt < 16:
+                action = env.action_space.sample()
 
             obs_tp1, reward, done, _ = env.step(action)
             replay_buffer.add(obs_t, action, reward, obs_tp1, done)
@@ -121,6 +124,7 @@ def main():
             if done:
                 break
             obs_t = obs_tp1
+        attempt += 1
 
         # Training phase
         losses = []
@@ -133,7 +137,8 @@ def main():
                 losses.append(loss)
             gradients = tape.gradient(loss, variables)
             optimizer.apply_gradients(zip(gradients, variables))
-        print('Loss:', tf.reduce_mean(losses).numpy())
+        print('Loss:', tf.reduce_mean(losses).numpy(),
+              '(attempt:', str(attempt) + ')')
         print('Replay buffer size:', len(replay_buffer))
 
 
