@@ -4,8 +4,10 @@ import gym
 
 from gym import envs
 
-from baselines.deepq.replay_buffer import ReplayBuffer
+from replay_buffer import ReplayBuffer
 from muzero import MuZeroPSO
+
+import random
 
 
 state_shape = 4
@@ -64,7 +66,7 @@ def define_model(env):
         return (prediction_policy_path(state), tf.reshape(prediction_value_path(state), [-1]))
 
     def action_sampler(policy):
-        return tf.argmax(tf.random.categorical(policy, num_samples=1), axis=-1)
+        return tf.reshape(tf.random.categorical(policy, num_samples=1), [-1])
 
     variables = [
         *representation_variables,
@@ -96,7 +98,7 @@ def main():
     print('Observation space:', env.observation_space)
     print('Action space:', env.action_space)
 
-    replay_buffer = ReplayBuffer(4096)
+    replay_buffer = ReplayBuffer(64)
 
     representation, dynamics, prediction, action_sampler, variables = define_model(
         env)
@@ -107,11 +109,12 @@ def main():
 
     while True:
         obs_t = env.reset()
+        replay_buffer.begin_episode()
         while True:
             env.render()
 
             action = muzero.plan(obs_t, action_sampler,
-                                 num_particles=1, depth=1)[0][0].numpy()
+                                 num_particles=4, depth=2)[0][0].numpy()
 
             obs_tp1, reward, done, _ = env.step(action)
             replay_buffer.add(obs_t, action, reward, obs_tp1, done)
@@ -122,9 +125,9 @@ def main():
 
         # Training phase
         losses = []
-        for _ in range(64):
-            obs, actions, rewards, obs_tp1, dones = replay_buffer.sample(
-                1)
+        batch = replay_buffer.sample(16, 4)
+        for sample in batch:
+            obs, actions, rewards, obs_tp1, dones = zip(*sample)
             with tf.GradientTape() as tape:
                 loss = muzero.loss(obs, actions, rewards, obs_tp1,
                                    dones[0], discount_factor, loss_r, loss_v, loss_p)
