@@ -43,7 +43,7 @@ def define_model(env):
         [dynamics_trunk, dynamics_state_head], name='dynamics_state')
 
     def dynamics(state, action):
-        action = tf.one_hot(action, action_shape)
+        action = tf.one_hot(action, action_shape, axis=-1)
         state_action = tf.concat((state, action), axis=1)
         return (tf.reshape(dynamics_reward_path(state_action), [-1]), dynamics_state_path(state_action))
 
@@ -105,7 +105,7 @@ def main():
     loss_r, loss_v, loss_p = define_losses(variables)
     muzero = MuZeroPSO(representation, dynamics, prediction)
 
-    optimizer = tf.optimizers.Adam()
+    optimizer = tf.optimizers.Adam(0.005)
 
     attempt = 0
     while True:
@@ -114,8 +114,8 @@ def main():
             env.render()
 
             action = muzero.plan(obs_t, action_sampler,
-                                 num_particles=64, depth=2)[0][0].numpy()
-            if attempt < 32:
+                                 num_particles=32, depth=4)[0][0].numpy()
+            if attempt < 16:
                 action = env.action_space.sample()
 
             obs_tp1, reward, done, _ = env.step(action)
@@ -128,15 +128,23 @@ def main():
 
         # Training phase
         losses = []
-        batch = replay_buffer.sample(16, 3)
-        for sample in batch:
-            obs, actions, rewards, obs_tp1, dones = zip(*sample)
-            with tf.GradientTape() as tape:
-                loss = muzero.loss(obs, actions, rewards, obs_tp1,
-                                   dones[-1], discount_factor, loss_r, loss_v, loss_p)
-                losses.append(loss)
-            gradients = tape.gradient(loss, variables)
-            optimizer.apply_gradients(zip(gradients, variables))
+        batch = replay_buffer.sample(512, 8)
+
+        obs, actions, rewards, obs_tp1, dones = zip(
+            *[zip(*entry) for entry in batch])
+        obs = tf.constant(list(zip(*obs)))
+        actions = tf.constant(list(zip(*actions)))
+        rewards = tf.constant(list(zip(*rewards)))
+        obs_tp1 = tf.constant(list(zip(*obs_tp1)))
+        dones = tf.constant(list(zip(*dones)))
+
+        with tf.GradientTape() as tape:
+            loss = muzero.loss(obs, actions, rewards, obs_tp1,
+                               dones, discount_factor, loss_r, loss_v, loss_p)
+            losses.append(loss)
+        gradients = tape.gradient(loss, variables)
+        optimizer.apply_gradients(zip(gradients, variables))
+
         print('Loss:', tf.reduce_mean(losses).numpy(),
               '(attempt:', str(attempt) + ')')
         print('Replay buffer size:', len(replay_buffer))
