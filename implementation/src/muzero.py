@@ -14,12 +14,12 @@ class MuZeroBase:
         policy, value = self.prediction(state)
         return policy, value, reward
 
-    def loss(self, obs_t, actions, rewards, obs_tp1, done, discount, loss_r, loss_v, loss_p):
+    def loss(self, obs_t, actions, rewards, obs_tp1, dones, discount, loss_r, loss_v, loss_p):
         losses = []
-        state = self.representation(tf.expand_dims(obs_t[0], 0))
+        state = self.representation(obs_t[0])
 
-        bootstrapped_value = tf.constant([0.0]) if done else tf.stop_gradient(self.prediction(
-            self.representation(tf.expand_dims(obs_tp1[-1], 0)))[1])
+        bootstrapped_value = (1 - tf.cast(dones[-1], tf.float32)) * tf.stop_gradient(self.prediction(
+            self.representation(obs_tp1[-1]))[-1])
         z = []
         for i in range(len(rewards)):
             z_i = 0
@@ -29,9 +29,6 @@ class MuZeroBase:
             z.append(z_i)
 
         for _, action, true_reward, _, z_k in zip(obs_t, actions, rewards, obs_tp1, z):
-            action = tf.expand_dims(action, 0)
-            true_reward = tf.expand_dims(true_reward, 0)
-
             policy, value = self.prediction(state)
             reward, state = self.dynamics(state, action)
 
