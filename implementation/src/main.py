@@ -48,7 +48,7 @@ def define_model(env):
         return (tf.reshape(dynamics_reward_path(state_action), [-1]), dynamics_state_path(state_action))
 
     prediction_trunk = tf.keras.Sequential([
-        tf.keras.layers.Dense(state_shape, activation=tf.nn.tanh,
+        tf.keras.layers.Dense(state_shape, activation=tf.nn.leaky_relu,
                               input_shape=(state_shape,)),
     ])
     prediction_policy_head = tf.keras.Sequential([
@@ -87,9 +87,12 @@ def define_losses(variables):
         return tf.losses.MSE(true, pred)
 
     def loss_p(action, logits):
-        return tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(action, logits)) * 0.01
+        return tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(action, logits)) * 0.2
 
-    return loss_r, loss_v, loss_p
+    def regularization():
+        return tf.add_n([tf.nn.l2_loss(variable) for variable in variables]) * 0.01
+
+    return loss_r, loss_v, loss_p, regularization
 
 
 def main():
@@ -102,10 +105,10 @@ def main():
 
     representation, dynamics, prediction, action_sampler, variables = define_model(
         env)
-    loss_r, loss_v, loss_p = define_losses(variables)
+    loss_r, loss_v, loss_p, regularization = define_losses(variables)
     muzero = MuZeroPSO(representation, dynamics, prediction)
 
-    optimizer = tf.optimizers.Adam(0.005)
+    optimizer = tf.optimizers.Adam(0.001)
 
     attempt = 0
     while True:
@@ -115,8 +118,6 @@ def main():
 
             action = muzero.plan(obs_t, action_sampler,
                                  num_particles=32, depth=4)[0][0].numpy()
-            if attempt < 16:
-                action = env.action_space.sample()
 
             obs_tp1, reward, done, _ = env.step(action)
             replay_buffer.add(obs_t, action, reward, obs_tp1, done)
@@ -127,7 +128,6 @@ def main():
         attempt += 1
 
         # Training phase
-        losses = []
         batch = replay_buffer.sample(512, 8)
 
         obs, actions, rewards, obs_tp1, dones = zip(
@@ -140,12 +140,11 @@ def main():
 
         with tf.GradientTape() as tape:
             loss = muzero.loss(obs, actions, rewards, obs_tp1,
-                               dones, discount_factor, loss_r, loss_v, loss_p)
-            losses.append(loss)
+                               dones, discount_factor, loss_r, loss_v, loss_p, regularization)
         gradients = tape.gradient(loss, variables)
         optimizer.apply_gradients(zip(gradients, variables))
 
-        print('Loss:', tf.reduce_mean(losses).numpy(),
+        print('Loss:', loss.numpy(),
               '(attempt:', str(attempt) + ')')
         print('Replay buffer size:', len(replay_buffer))
 
