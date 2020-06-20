@@ -79,10 +79,6 @@ def define_model(env):
     return representation, dynamics, prediction, action_sampler, variables
 
 
-# ADD REWARDS WHEN PLANNING, FUTURE VALUE ALONE IS NOT THE ONLY THING THAT MATTERS
-
-
-
 def define_losses(variables):
     def loss_r(true, pred):
         return tf.losses.MSE(true, pred)
