@@ -18,7 +18,7 @@ def define_representation(env):
     representation = tf.keras.Sequential([
         tf.keras.layers.Dense(
             8, activation=tf.nn.leaky_relu, input_shape=obs_shape),
-        tf.keras.layers.Dense(state_shape, activation=tf.nn.sigmoid),
+        tf.keras.layers.Dense(state_shape, activation=tf.nn.leaky_relu),
     ], name='representation')
     return representation, representation.trainable_variables
 
@@ -69,7 +69,7 @@ def define_model(env):
         return (prediction_policy_path(state), tf.reshape(prediction_value_path(state), [-1]))
 
     def action_sampler(policy):
-        return tf.reshape(tf.random.categorical(policy * 0.0, num_samples=1), [-1])
+        return tf.reshape(tf.random.categorical(policy, num_samples=1), [-1])
 
     variables = [
         *representation_variables,
