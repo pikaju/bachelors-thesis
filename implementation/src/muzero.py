@@ -18,8 +18,10 @@ class MuZeroBase:
         losses = []
         state = self.representation(obs_t[0])
 
-        bootstrapped_value = (1 - tf.cast(dones[-1], tf.float32)) * tf.stop_gradient(self.prediction(
-            self.representation(obs_tp1[-1]))[-1])
+        bootstrapped_value = (
+            1 - tf.cast(dones[-1], tf.float32)) * self.prediction(self.representation(obs_tp1[-1]))[-1]
+        bootstrapped_value = tf.stop_gradient(bootstrapped_value)
+
         z = []
         for i in range(len(rewards)):
             z_i = 0
