@@ -99,19 +99,19 @@ def define_losses(variables):
 
 
 def main():
-    env = gym.make('CartPole-v1')
+    env = gym.make('LunarLander-v2')
     discount_factor = 0.95
     print('Observation space:', env.observation_space)
     print('Action space:', env.action_space)
 
-    replay_buffer = ReplayBuffer(1024)
+    replay_buffer = ReplayBuffer(4096)
 
     representation, dynamics, prediction, action_sampler, variables = define_model(
         env)
     loss_r, loss_v, loss_p, regularization = define_losses(variables)
     muzero = MuZeroPSO(representation, dynamics, prediction)
 
-    optimizer = tf.optimizers.Adam(0.003)
+    optimizer = tf.optimizers.Adam(0.005)
 
     attempt = 0
     while True:
@@ -123,6 +123,7 @@ def main():
                                  num_particles=32, depth=4)[0][0].numpy()
 
             obs_tp1, reward, done, _ = env.step(action)
+            reward /= 16.0
             replay_buffer.add(obs_t, action, reward, obs_tp1, done)
 
             if done:
@@ -131,8 +132,8 @@ def main():
         attempt += 1
 
         # Training phase
-        for _ in range(16):
-            batch = replay_buffer.sample(256, 5)
+        for _ in range(8):
+            batch = replay_buffer.sample(256, 9)
 
             obs, actions, rewards, obs_tp1, dones = zip(
                 *[zip(*entry) for entry in batch])
