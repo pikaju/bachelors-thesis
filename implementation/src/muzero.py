@@ -48,13 +48,15 @@ class MuZeroPSO(MuZeroBase):
         state = tf.repeat(initial_state, repeats=[num_particles], axis=0)
 
         actions = []
+        total_reward = 0
         for _ in range(depth):
             policy, value = self.prediction(state)
             action = action_sampler(policy)
             actions.append(action)
-            _, state = self.dynamics(state, action)
+            reward, state = self.dynamics(state, action)
+            total_reward += reward
 
         _, value = self.prediction(state)
-        best_index = tf.argmax(value)
+        best_index = tf.argmax(total_reward + value)
 
         return [action[best_index] for action in actions], value[best_index]
