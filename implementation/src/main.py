@@ -116,7 +116,7 @@ def main():
         while True:
             env.render()
 
-            action = muzero.plan(obs_t, action_sampler,
+            action = muzero.plan(obs_t, action_sampler, discount_factor,
                                  num_particles=32, depth=4)[0][0].numpy()
 
             obs_tp1, reward, done, _ = env.step(action)
