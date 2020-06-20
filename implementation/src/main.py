@@ -10,14 +10,15 @@ from muzero import MuZeroPSO
 import random
 
 
-state_shape = 4
+state_shape = 8
 
 
 def define_representation(env):
     obs_shape = env.observation_space.shape
     representation = tf.keras.Sequential([
-        tf.keras.layers.Dense(8, activation=tf.nn.tanh, input_shape=obs_shape),
-        tf.keras.layers.Dense(state_shape, activation=tf.nn.tanh),
+        tf.keras.layers.Dense(
+            8, activation=tf.nn.leaky_relu, input_shape=obs_shape),
+        tf.keras.layers.Dense(state_shape, activation=tf.nn.leaky_relu),
     ], name='representation')
     return representation, representation.trainable_variables
 
@@ -28,7 +29,7 @@ def define_model(env):
     action_shape = env.action_space.n
 
     dynamics_trunk = tf.keras.Sequential([
-        tf.keras.layers.Dense(state_shape, activation=tf.nn.tanh,
+        tf.keras.layers.Dense(state_shape, activation=tf.nn.leaky_relu,
                               input_shape=(state_shape + action_shape,)),
     ])
     dynamics_reward_head = tf.keras.Sequential([
@@ -66,7 +67,7 @@ def define_model(env):
         return (prediction_policy_path(state), tf.reshape(prediction_value_path(state), [-1]))
 
     def action_sampler(policy):
-        return tf.reshape(tf.random.categorical(policy, num_samples=1), [-1])
+        return tf.reshape(tf.random.categorical(policy * 0.0, num_samples=1), [-1])
 
     variables = [
         *representation_variables,
@@ -96,7 +97,7 @@ def define_losses(variables):
 
 
 def main():
-    env = gym.make('CartPole-v0')
+    env = gym.make('LunarLander-v2')
     discount_factor = 0.8
     print('Observation space:', env.observation_space)
     print('Action space:', env.action_space)
@@ -128,13 +129,13 @@ def main():
         attempt += 1
 
         # Training phase
-        batch = replay_buffer.sample(512, 8)
+        batch = replay_buffer.sample(512, 6)
 
         obs, actions, rewards, obs_tp1, dones = zip(
             *[zip(*entry) for entry in batch])
         obs = tf.constant(list(zip(*obs)))
         actions = tf.constant(list(zip(*actions)))
-        rewards = tf.constant(list(zip(*rewards)))
+        rewards = tf.constant(list(zip(*rewards)), dtype=tf.float32)
         obs_tp1 = tf.constant(list(zip(*obs_tp1)))
         dones = tf.constant(list(zip(*dones)))
 
