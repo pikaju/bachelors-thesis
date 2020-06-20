@@ -14,7 +14,7 @@ class MuZeroBase:
         policy, value = self.prediction(state)
         return policy, value, reward
 
-    def loss(self, obs_t, actions, rewards, obs_tp1, dones, discount, loss_r, loss_v, loss_p):
+    def loss(self, obs_t, actions, rewards, obs_tp1, dones, discount, loss_r, loss_v, loss_p, regularization):
         losses = []
         state = self.representation(obs_t[0])
 
@@ -33,7 +33,7 @@ class MuZeroBase:
             reward, state = self.dynamics(state, action)
 
             losses.append(loss_r(true_reward, reward) +
-                          loss_v(z_k, value) + loss_p(action, policy))
+                          loss_v(z_k, value) + loss_p(action, policy) + regularization())
 
         return tf.reduce_mean(losses)
 
@@ -58,5 +58,7 @@ class MuZeroPSO(MuZeroBase):
 
         _, value = self.prediction(state)
         best_index = tf.argmax(total_reward + value)
+        import numpy as np
+        print(np.array([action[best_index] for action in actions]))
 
         return [action[best_index] for action in actions], value[best_index]
