@@ -18,7 +18,7 @@ def define_representation(env):
     representation = tf.keras.Sequential([
         tf.keras.layers.Dense(
             8, activation=tf.nn.leaky_relu, input_shape=obs_shape),
-        tf.keras.layers.Dense(state_shape, activation=tf.nn.leaky_relu),
+        tf.keras.layers.Dense(state_shape, activation=tf.nn.sigmoid),
     ], name='representation')
     return representation, representation.trainable_variables
 
@@ -31,6 +31,7 @@ def define_model(env):
     dynamics_trunk = tf.keras.Sequential([
         tf.keras.layers.Dense(state_shape, activation=tf.nn.leaky_relu,
                               input_shape=(state_shape + action_shape,)),
+        tf.keras.layers.Dense(state_shape, activation=tf.nn.leaky_relu),
     ])
     dynamics_reward_head = tf.keras.Sequential([
         tf.keras.layers.Dense(1),
@@ -51,6 +52,7 @@ def define_model(env):
     prediction_trunk = tf.keras.Sequential([
         tf.keras.layers.Dense(state_shape, activation=tf.nn.leaky_relu,
                               input_shape=(state_shape,)),
+        tf.keras.layers.Dense(action_shape * 2, activation=tf.nn.leaky_relu),
     ])
     prediction_policy_head = tf.keras.Sequential([
         tf.keras.layers.Dense(action_shape)
@@ -88,17 +90,17 @@ def define_losses(variables):
         return tf.losses.MSE(true, pred)
 
     def loss_p(action, logits):
-        return tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(action, logits)) * 0.2
+        return tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(action, logits))
 
     def regularization():
-        return tf.add_n([tf.nn.l2_loss(variable) for variable in variables]) * 0.01
+        return tf.add_n([tf.nn.l2_loss(variable) for variable in variables]) * 0.001
 
     return loss_r, loss_v, loss_p, regularization
 
 
 def main():
-    env = gym.make('LunarLander-v2')
-    discount_factor = 0.8
+    env = gym.make('CartPole-v1')
+    discount_factor = 0.95
     print('Observation space:', env.observation_space)
     print('Action space:', env.action_space)
 
@@ -109,7 +111,7 @@ def main():
     loss_r, loss_v, loss_p, regularization = define_losses(variables)
     muzero = MuZeroPSO(representation, dynamics, prediction)
 
-    optimizer = tf.optimizers.Adam(0.001)
+    optimizer = tf.optimizers.Adam(0.003)
 
     attempt = 0
     while True:
@@ -129,24 +131,25 @@ def main():
         attempt += 1
 
         # Training phase
-        batch = replay_buffer.sample(512, 6)
+        for _ in range(16):
+            batch = replay_buffer.sample(256, 5)
 
-        obs, actions, rewards, obs_tp1, dones = zip(
-            *[zip(*entry) for entry in batch])
-        obs = tf.constant(list(zip(*obs)))
-        actions = tf.constant(list(zip(*actions)))
-        rewards = tf.constant(list(zip(*rewards)), dtype=tf.float32)
-        obs_tp1 = tf.constant(list(zip(*obs_tp1)))
-        dones = tf.constant(list(zip(*dones)))
+            obs, actions, rewards, obs_tp1, dones = zip(
+                *[zip(*entry) for entry in batch])
+            obs = tf.constant(list(zip(*obs)))
+            actions = tf.constant(list(zip(*actions)))
+            rewards = tf.constant(list(zip(*rewards)), dtype=tf.float32)
+            obs_tp1 = tf.constant(list(zip(*obs_tp1)))
+            dones = tf.constant(list(zip(*dones)))
 
-        with tf.GradientTape() as tape:
-            loss = muzero.loss(obs, actions, rewards, obs_tp1,
-                               dones, discount_factor, loss_r, loss_v, loss_p, regularization)
-        gradients = tape.gradient(loss, variables)
-        optimizer.apply_gradients(zip(gradients, variables))
+            with tf.GradientTape() as tape:
+                loss = muzero.loss(obs, actions, rewards, obs_tp1,
+                                   dones, discount_factor, loss_r, loss_v, loss_p, regularization)
+            gradients = tape.gradient(loss, variables)
+            optimizer.apply_gradients(zip(gradients, variables))
 
-        print('Loss:', loss.numpy(),
-              '(attempt:', str(attempt) + ')')
+            print('Loss:', loss.numpy(),
+                  '(attempt:', str(attempt) + ')')
         print('Replay buffer size:', len(replay_buffer))
 
 
