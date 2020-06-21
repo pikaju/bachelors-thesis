@@ -7,6 +7,7 @@ class MuZeroBase:
         self.dynamics = dynamics
         self.prediction = prediction
 
+    @tf.function
     def predict(self, obs, actions):
         state = self.representation(obs)
         for action in actions:
@@ -14,6 +15,7 @@ class MuZeroBase:
         policy, value = self.prediction(state)
         return policy, value, reward
 
+    @tf.function
     def loss(self, obs_t, actions, rewards, obs_tp1, dones, discount, loss_r, loss_v, loss_p, regularization):
         losses = []
         state = self.representation(obs_t[0])
@@ -44,6 +46,7 @@ class MuZeroPSO(MuZeroBase):
     def __init__(self, representation, dynamics, prediction):
         super().__init__(representation, dynamics, prediction)
 
+    @tf.function
     def plan(self, obs, action_sampler, discount, num_particles=4, depth=4):
         obs = tf.expand_dims(obs, 0)
         initial_state = self.representation(obs)
