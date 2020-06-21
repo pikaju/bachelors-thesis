@@ -24,7 +24,14 @@ def define_representation(env):
 
     @tf.function
     def representation(obs):
-        return representation_path(obs)
+        if isinstance(env.observation_space, gym.spaces.Box):
+            def no_inf(x):
+                return 2.0 if x == float('inf') else (-2.0 if x == -float('inf') else x)
+            high = env.observation_space.high
+            low = env.observation_space.low
+            high = tf.expand_dims([no_inf(x) for x in high], 0)
+            low = tf.expand_dims([no_inf(x) for x in low], 0)
+            return representation_path((tf.cast(obs, tf.float32) - low) / (high - low))
 
     return representation, representation_path.trainable_variables
 
