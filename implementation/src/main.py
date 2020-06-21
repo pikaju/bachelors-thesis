@@ -11,30 +11,29 @@ import random
 
 
 state_shape = 8
+activation = tf.nn.relu
 
 
 def define_representation(env):
     obs_shape = env.observation_space.shape
     representation = tf.keras.Sequential([
         tf.keras.layers.Dense(
-            8, activation=tf.nn.leaky_relu, input_shape=obs_shape),
-        tf.keras.layers.Dense(state_shape, activation=tf.nn.leaky_relu),
+            8, activation=activation, input_shape=obs_shape),
+        tf.keras.layers.Dense(state_shape, activation=activation),
     ], name='representation')
     return representation, representation.trainable_variables
 
 
-def define_model(env):
-    representation, representation_variables = define_representation(env)
-
+def define_dynamics(env):
     if isinstance(env.action_space, gym.spaces.Box):
         action_shape = env.action_space.shape[0]
     else:
         action_shape = env.action_space.n
 
     dynamics_trunk = tf.keras.Sequential([
-        tf.keras.layers.Dense(state_shape, activation=tf.nn.leaky_relu,
+        tf.keras.layers.Dense(state_shape, activation=activation,
                               input_shape=(state_shape + action_shape,)),
-        tf.keras.layers.Dense(state_shape, activation=tf.nn.leaky_relu),
+        tf.keras.layers.Dense(state_shape, activation=activation),
     ])
     dynamics_reward_head = tf.keras.Sequential([
         tf.keras.layers.Dense(1),
@@ -53,10 +52,19 @@ def define_model(env):
         state_action = tf.concat((state, action), axis=1)
         return (tf.reshape(dynamics_reward_path(state_action), [-1]), dynamics_state_path(state_action))
 
+    return dynamics, [*dynamics_reward_path.trainable_variables, *dynamics_state_path.trainable_variables]
+
+
+def define_prediction(env):
+    if isinstance(env.action_space, gym.spaces.Box):
+        action_shape = env.action_space.shape[0]
+    else:
+        action_shape = env.action_space.n
+
     prediction_trunk = tf.keras.Sequential([
-        tf.keras.layers.Dense(state_shape, activation=tf.nn.leaky_relu,
+        tf.keras.layers.Dense(state_shape, activation=activation,
                               input_shape=(state_shape,)),
-        tf.keras.layers.Dense(action_shape * 2, activation=tf.nn.leaky_relu),
+        tf.keras.layers.Dense(action_shape * 2, activation=activation),
     ])
     prediction_policy_head = tf.keras.Sequential([
         tf.keras.layers.Dense(action_shape)
@@ -78,12 +86,18 @@ def define_model(env):
         else:
             return tf.random.normal(policy.shape, mean=policy)
 
+    return prediction, action_sampler, [*prediction_policy_path.trainable_variables, *prediction_value_path.trainable_variables]
+
+
+def define_model(env):
+    representation, representation_variables = define_representation(env)
+    dynamics, dynamics_variables = define_dynamics(env)
+    prediction, action_sampler, prediction_variables = define_prediction(env)
+
     variables = [
         *representation_variables,
-        *dynamics_reward_path.trainable_variables,
-        *dynamics_state_path.trainable_variables,
-        *prediction_policy_path.trainable_variables,
-        *prediction_value_path.trainable_variables,
+        *dynamics_variables,
+        *prediction_variables,
     ]
 
     return representation, dynamics, prediction, action_sampler, variables
@@ -109,8 +123,10 @@ def define_losses(env, variables):
 
 
 def main():
+    writer = tf.summary.create_file_writer('logs/')
+
     env = gym.make('LunarLanderContinuous-v2')
-    discount_factor = 0.95
+    discount_factor = 0.8
     print('Observation space:', env.observation_space)
     print('Action space:', env.action_space)
 
@@ -126,6 +142,7 @@ def main():
     attempt = 0
     while True:
         obs_t = env.reset()
+        total_reward = 0
         while True:
             env.render()
 
@@ -133,6 +150,7 @@ def main():
                                  num_particles=32, depth=4)[0][0].numpy()
 
             obs_tp1, reward, done, _ = env.step(action)
+            total_reward += reward
             reward /= 16.0
             replay_buffer.add(obs_t, action, reward, obs_tp1, done)
 
@@ -140,6 +158,9 @@ def main():
                 break
             obs_t = obs_tp1
         attempt += 1
+
+        with writer.as_default():
+            tf.summary.scalar('total_reward', total_reward, step=attempt)
 
         # Training phase
         for _ in range(16):
@@ -159,9 +180,15 @@ def main():
             gradients = tape.gradient(loss, variables)
             optimizer.apply_gradients(zip(gradients, variables))
 
-            print('Loss:', loss.numpy(),
-                  '(attempt:', str(attempt) + ')')
-        print('Replay buffer size:', len(replay_buffer))
+            with writer.as_default():
+                tf.summary.scalar('loss', loss, step=attempt)
+                print('Loss:', loss.numpy(),
+                      '(attempt:', str(attempt) + ')')
+
+        with writer.as_default():
+            tf.summary.scalar('replay buffer size', len(
+                replay_buffer), step=attempt)
+            print('Replay buffer size:', len(replay_buffer))
 
 
 if __name__ == '__main__':
