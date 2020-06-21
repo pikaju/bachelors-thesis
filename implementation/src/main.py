@@ -104,9 +104,9 @@ def test():
     run_env(
         env_name='CartPole-v1',
         learning_rate=0.005,
-        replay_buffer_size=1024,
+        replay_buffer_size=1400,
         discount_factor=0.99,
-        batch_size=256,
+        batch_size=512,
         max_epochs=None,
     )
 
