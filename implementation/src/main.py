@@ -18,16 +18,13 @@ def run_env(env_name,
             replay_buffer_size=1024,
             learning_rate=0.005,
             batch_size=512,
-            max_epochs=250):
+            max_epochs=250,
+            render=True):
     writer = tf.summary.create_file_writer(
         'logs/run-{}-{}-{}-{}'.format(discount_factor, replay_buffer_size, learning_rate, batch_size))
 
     env = gym.make(env_name)
-    print('Observation space:', env.observation_space)
-    print('Action space:', env.action_space)
-
     replay_buffer = ReplayBuffer(replay_buffer_size)
-
     representation, dynamics, prediction, action_sampler, variables = define_model(
         env)
     loss_r, loss_v, loss_p, regularization = define_losses(env, variables)
@@ -36,11 +33,12 @@ def run_env(env_name,
     optimizer = tf.optimizers.Adam(learning_rate)
 
     epoch = 0
-    while epoch < max_epochs:
+    while max_epochs is None or epoch < max_epochs:
         obs_t = env.reset()
         total_reward = 0
         while True:
-            # env.render()
+            if render:
+                env.render()
 
             action = muzero.plan(obs_t, action_sampler, discount_factor,
                                  num_particles=32, depth=4)[0][0].numpy()
@@ -79,18 +77,19 @@ def run_env(env_name,
                 tf.summary.scalar('loss', loss, step=epoch)
 
 
-def main():
+def benchmark():
     pool = Pool(6)
-    for learning_rate in [0.01, 0.005, 0.001, 0.0005]:
-        for replay_buffer_size in [1024, 4096]:
-            for discount_factor in [0.99, 0.9, 0.7]:
-                for batch_size in [64, 256]:
+    for learning_rate in [0.001, 0.005, 0.0005, 0.01]:
+        for replay_buffer_size in [1024, 1400]:
+            for discount_factor in [0.99, 0.8, 0.95]:
+                for batch_size in [256, 512]:
                     pool.apply_async(run_env, kwds={
                         'env_name': 'CartPole-v1',
                         'learning_rate': learning_rate,
                         'replay_buffer_size': replay_buffer_size,
                         'discount_factor': discount_factor,
                         'batch_size': batch_size,
+                        'render': False,
                     })
 
     import time
@@ -99,6 +98,21 @@ def main():
             time.sleep(100)
         except KeyboardInterrupt:
             return
+
+
+def test():
+    run_env(
+        env_name='CartPole-v1',
+        learning_rate=0.001,
+        replay_buffer_size=1024,
+        discount_factor=0.99,
+        batch_size=256,
+        max_epochs=None,
+    )
+
+
+def main():
+    benchmark()
 
 
 if __name__ == '__main__':
