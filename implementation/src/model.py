@@ -10,8 +10,16 @@ def define_representation(env):
     obs_shape = env.observation_space.shape
     representation = tf.keras.Sequential([
         tf.keras.layers.Dense(
-            8, activation=activation, input_shape=obs_shape),
-        tf.keras.layers.Dense(state_shape, activation=activation),
+            8,
+            activation=activation,
+            input_shape=obs_shape,
+            kernel_initializer='he_normal',
+        ),
+        tf.keras.layers.Dense(
+            state_shape,
+            activation=activation,
+            kernel_initializer='he_normal',
+        ),
     ], name='representation')
     return representation, representation.trainable_variables
 
@@ -23,20 +31,38 @@ def define_dynamics(env):
         action_shape = env.action_space.n
 
     dynamics_trunk = tf.keras.Sequential([
-        tf.keras.layers.Dense(state_shape, activation=activation,
-                              input_shape=(state_shape + action_shape,)),
-        tf.keras.layers.Dense(state_shape, activation=activation),
+        tf.keras.layers.Dense(
+            state_shape,
+            activation=activation,
+            input_shape=(state_shape + action_shape,),
+            kernel_initializer='he_normal',
+        ),
+        tf.keras.layers.Dense(
+            state_shape,
+            activation=activation,
+            kernel_initializer='he_normal',
+        ),
     ])
     dynamics_reward_head = tf.keras.Sequential([
-        tf.keras.layers.Dense(1),
+        tf.keras.layers.Dense(
+            1,
+            kernel_initializer='he_normal',
+        ),
     ])
     dynamics_state_head = tf.keras.Sequential([
-        tf.keras.layers.Dense(state_shape),
+        tf.keras.layers.Dense(
+            state_shape,
+            kernel_initializer='he_normal',
+        ),
     ])
     dynamics_reward_path = tf.keras.Sequential(
-        [dynamics_trunk, dynamics_reward_head], name='dynamics_reward')
+        [dynamics_trunk, dynamics_reward_head],
+        name='dynamics_reward'
+    )
     dynamics_state_path = tf.keras.Sequential(
-        [dynamics_trunk, dynamics_state_head], name='dynamics_state')
+        [dynamics_trunk, dynamics_state_head],
+        name='dynamics_state'
+    )
 
     def dynamics(state, action):
         if isinstance(env.action_space, gym.spaces.Discrete):
@@ -54,20 +80,38 @@ def define_prediction(env):
         action_shape = env.action_space.n
 
     prediction_trunk = tf.keras.Sequential([
-        tf.keras.layers.Dense(state_shape, activation=activation,
-                              input_shape=(state_shape,)),
-        tf.keras.layers.Dense(action_shape * 2, activation=activation),
+        tf.keras.layers.Dense(
+            state_shape,
+            activation=activation,
+            input_shape=(state_shape,),
+            kernel_initializer='he_normal',
+        ),
+        tf.keras.layers.Dense(
+            action_shape * 2,
+            activation=activation,
+            kernel_initializer='he_normal',
+        ),
     ])
     prediction_policy_head = tf.keras.Sequential([
-        tf.keras.layers.Dense(action_shape)
+        tf.keras.layers.Dense(
+            action_shape,
+            kernel_initializer='he_normal',
+        )
     ])
     prediction_value_head = tf.keras.Sequential([
-        tf.keras.layers.Dense(1)
+        tf.keras.layers.Dense(
+            1,
+            kernel_initializer='he_normal',
+        )
     ])
     prediction_policy_path = tf.keras.Sequential(
-        [prediction_trunk, prediction_policy_head], name='prediction_policy')
+        [prediction_trunk, prediction_policy_head],
+        name='prediction_policy'
+    )
     prediction_value_path = tf.keras.Sequential(
-        [prediction_trunk, prediction_value_head], name='prediction_value')
+        [prediction_trunk, prediction_value_head],
+        name='prediction_value'
+    )
 
     def prediction(state):
         return (prediction_policy_path(state), tf.reshape(prediction_value_path(state), [-1]))
