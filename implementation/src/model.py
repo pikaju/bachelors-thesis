@@ -26,12 +26,13 @@ def define_representation(env):
     def representation(obs):
         if isinstance(env.observation_space, gym.spaces.Box):
             def no_inf(x):
-                return 2.0 if x == float('inf') else (-2.0 if x == -float('inf') else x)
+                return 1.0 if x > 10.0**20 else (-1.0 if x < -10.0**20 else x)
             high = env.observation_space.high
             low = env.observation_space.low
             high = tf.expand_dims([no_inf(x) for x in high], 0)
             low = tf.expand_dims([no_inf(x) for x in low], 0)
-            return representation_path((tf.cast(obs, tf.float32) - low) / (high - low))
+            # return representation_path((tf.cast(obs, tf.float32) - low) / (high - low) * 2.0 - 1.0)
+            return representation_path(tf.cast(obs, tf.float32))
 
     return representation, representation_path.trainable_variables
 
@@ -76,7 +77,7 @@ def define_dynamics(env):
         name='dynamics_state'
     )
 
-    @tf.function
+    @ tf.function
     def dynamics(state, action):
         if isinstance(env.action_space, gym.spaces.Discrete):
             action = tf.one_hot(action, action_shape, axis=-1)
@@ -126,7 +127,7 @@ def define_prediction(env):
         name='prediction_value'
     )
 
-    @tf.function
+    @ tf.function
     def prediction(state):
         return (prediction_policy_path(state), tf.reshape(prediction_value_path(state), [-1]))
 
