@@ -41,7 +41,7 @@ def run_env(env_name,
                 env.render()
 
             action = muzero.plan(obs_t, action_sampler, discount_factor,
-                                 num_particles=32, depth=4)[0][0].numpy()
+                                 num_particles=32, depth=8)[0][0].numpy()
 
             obs_tp1, reward, done, _ = env.step(action)
             total_reward += reward
@@ -57,7 +57,7 @@ def run_env(env_name,
 
         # Training phase
         for _ in range(16):
-            batch = replay_buffer.sample(batch_size, 5)
+            batch = replay_buffer.sample(batch_size, 9)
 
             obs, actions, rewards, obs_tp1, dones = zip(
                 *[zip(*entry) for entry in batch])
@@ -79,10 +79,10 @@ def run_env(env_name,
 
 def benchmark():
     pool = Pool(6)
-    for learning_rate in [0.001, 0.005, 0.0005, 0.01]:
-        for replay_buffer_size in [1024, 1400]:
-            for discount_factor in [0.99, 0.8, 0.95]:
-                for batch_size in [256, 512]:
+    for batch_size in [512, 256]:
+        for discount_factor in [0.95, 0.99, 0.8]:
+            for replay_buffer_size in [1024, 1500]:
+                for learning_rate in [0.01, 0.005, 0.02, 0.002]:
                     pool.apply_async(run_env, kwds={
                         'env_name': 'CartPole-v1',
                         'learning_rate': learning_rate,
@@ -104,8 +104,8 @@ def test():
     run_env(
         env_name='CartPole-v1',
         learning_rate=0.005,
-        replay_buffer_size=1400,
-        discount_factor=0.99,
+        replay_buffer_size=1500,
+        discount_factor=0.95,
         batch_size=512,
         max_epochs=None,
     )
