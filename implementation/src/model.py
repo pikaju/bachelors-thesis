@@ -8,7 +8,7 @@ activation = tf.nn.relu
 
 def define_representation(env):
     obs_shape = env.observation_space.shape
-    representation = tf.keras.Sequential([
+    representation_path = tf.keras.Sequential([
         tf.keras.layers.Dense(
             8,
             activation=activation,
@@ -21,7 +21,12 @@ def define_representation(env):
             kernel_initializer='he_normal',
         ),
     ], name='representation')
-    return representation, representation.trainable_variables
+
+    @tf.function
+    def representation(obs):
+        return representation_path(obs)
+
+    return representation, representation_path.trainable_variables
 
 
 def define_dynamics(env):
@@ -64,6 +69,7 @@ def define_dynamics(env):
         name='dynamics_state'
     )
 
+    @tf.function
     def dynamics(state, action):
         if isinstance(env.action_space, gym.spaces.Discrete):
             action = tf.one_hot(action, action_shape, axis=-1)
@@ -113,6 +119,7 @@ def define_prediction(env):
         name='prediction_value'
     )
 
+    @tf.function
     def prediction(state):
         return (prediction_policy_path(state), tf.reshape(prediction_value_path(state), [-1]))
 
