@@ -103,7 +103,7 @@ def benchmark():
 def test():
     run_env(
         env_name='CartPole-v1',
-        learning_rate=0.001,
+        learning_rate=0.005,
         replay_buffer_size=1024,
         discount_factor=0.99,
         batch_size=256,
@@ -112,7 +112,7 @@ def test():
 
 
 def main():
-    benchmark()
+    test()
 
 
 if __name__ == '__main__':
