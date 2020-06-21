@@ -61,11 +61,11 @@ def run_env(env_name,
 
             obs, actions, rewards, obs_tp1, dones = zip(
                 *[zip(*entry) for entry in batch])
-            obs = tf.constant(list(zip(*obs)))
-            actions = tf.constant(list(zip(*actions)))
-            rewards = tf.constant(list(zip(*rewards)), dtype=tf.float32)
-            obs_tp1 = tf.constant(list(zip(*obs_tp1)))
-            dones = tf.constant(list(zip(*dones)))
+            obs = [tf.constant(x) for x in zip(*obs)]
+            actions = [tf.constant(x) for x in zip(*actions)]
+            rewards = [tf.constant(x) for x in zip(*rewards)]
+            obs_tp1 = [tf.constant(x) for x in zip(*obs_tp1)]
+            dones = [tf.constant(x) for x in zip(*dones)]
 
             with tf.GradientTape() as tape:
                 loss = muzero.loss(obs, actions, rewards, obs_tp1,
