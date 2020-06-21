@@ -41,7 +41,7 @@ def run_env(env_name,
                 env.render()
 
             action = muzero.plan(obs_t, action_sampler, discount_factor,
-                                 num_particles=32, depth=8)[0][0].numpy()
+                                 num_particles=32, depth=4)[0][0].numpy()
 
             obs_tp1, reward, done, _ = env.step(action)
             total_reward += reward
@@ -57,7 +57,7 @@ def run_env(env_name,
 
         # Training phase
         for _ in range(16):
-            batch = replay_buffer.sample(batch_size, 9)
+            batch = replay_buffer.sample(batch_size, 5)
 
             obs, actions, rewards, obs_tp1, dones = zip(
                 *[zip(*entry) for entry in batch])
