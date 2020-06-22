@@ -77,7 +77,7 @@ def define_dynamics(env):
         name='dynamics_state'
     )
 
-    @ tf.function
+    @tf.function
     def dynamics(state, action):
         if isinstance(env.action_space, gym.spaces.Discrete):
             action = tf.one_hot(action, action_shape, axis=-1)
