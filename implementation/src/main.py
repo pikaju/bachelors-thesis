@@ -61,11 +61,11 @@ def run_env(env_name,
 
             obs, actions, rewards, obs_tp1, dones = zip(
                 *[zip(*entry) for entry in batch])
-            obs = [tf.constant(x) for x in zip(*obs)]
+            obs = [tf.constant(x, tf.float32) for x in zip(*obs)]
             actions = [tf.constant(x) for x in zip(*actions)]
-            rewards = [tf.constant(x) for x in zip(*rewards)]
-            obs_tp1 = [tf.constant(x) for x in zip(*obs_tp1)]
-            dones = [tf.constant(x) for x in zip(*dones)]
+            rewards = [tf.constant(x, tf.float32) for x in zip(*rewards)]
+            obs_tp1 = [tf.constant(x, tf.float32) for x in zip(*obs_tp1)]
+            dones = [tf.constant(x, tf.bool) for x in zip(*dones)]
 
             with tf.GradientTape() as tape:
                 loss = muzero.loss(obs, actions, rewards, obs_tp1,
@@ -102,7 +102,7 @@ def benchmark():
 
 def test():
     run_env(
-        env_name='CartPole-v1',
+        env_name='LunarLander-v2',
         learning_rate=0.005,
         replay_buffer_size=1500,
         discount_factor=0.95,

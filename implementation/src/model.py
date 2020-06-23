@@ -26,8 +26,8 @@ def define_representation(env):
         return 1.0 if x > 10.0**20 else (-1.0 if x < -10.0**20 else x)
     high = env.observation_space.high
     low = env.observation_space.low
-    high = tf.expand_dims([no_inf(x) for x in high], 0)
-    low = tf.expand_dims([no_inf(x) for x in low], 0)
+    high = tf.expand_dims(tf.cast([no_inf(x) for x in high], tf.float32), 0)
+    low = tf.expand_dims(tf.cast([no_inf(x) for x in low], tf.float32), 0)
 
     @tf.function
     def representation(obs):
