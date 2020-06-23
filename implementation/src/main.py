@@ -84,7 +84,7 @@ def benchmark():
             for replay_buffer_size in [1024, 1500]:
                 for learning_rate in [0.01, 0.005, 0.02, 0.002]:
                     pool.apply_async(run_env, kwds={
-                        'env_name': 'CartPole-v1',
+                        'env_name': 'LunarLander-v2',
                         'learning_rate': learning_rate,
                         'replay_buffer_size': replay_buffer_size,
                         'discount_factor': discount_factor,
@@ -102,7 +102,7 @@ def benchmark():
 
 def test():
     run_env(
-        env_name='LunarLander-v2',
+        env_name='CartPole-v1',
         learning_rate=0.005,
         replay_buffer_size=1500,
         discount_factor=0.95,
