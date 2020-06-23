@@ -131,6 +131,7 @@ def define_prediction(env):
     def prediction(state):
         return (prediction_policy_path(state), tf.reshape(prediction_value_path(state), [-1]))
 
+    @tf.function
     def action_sampler(policy):
         if isinstance(env.action_space, gym.spaces.Discrete):
             return tf.reshape(tf.random.categorical(policy, num_samples=1), [-1])
@@ -155,18 +156,22 @@ def define_model(env):
 
 
 def define_losses(env, variables):
+    @tf.function
     def loss_r(true, pred):
         return tf.losses.MSE(true, pred)
 
+    @tf.function
     def loss_v(true, pred):
         return tf.losses.MSE(true, pred)
 
+    @tf.function
     def loss_p(action, policy):
         if isinstance(env.action_space, gym.spaces.Discrete):
             return tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(action, policy))
         else:
             return tf.losses.MSE(action, policy)
 
+    @tf.function
     def regularization():
         return tf.add_n([tf.nn.l2_loss(variable) for variable in variables]) * 0.001
 
