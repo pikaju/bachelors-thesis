@@ -46,7 +46,7 @@ def run_env(env_name,
                 discount_factor=tf.constant(discount_factor, tf.float32),
                 num_particles=tf.constant(32, tf.int32),
                 depth=4
-            )[0][0].numpy()
+            )[0].numpy()
 
             obs_tp1, reward, done, _ = env.step(action)
             total_reward += reward
