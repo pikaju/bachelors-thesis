@@ -48,8 +48,10 @@ class MuZeroBase:
             policy, value = self.prediction(state)
             reward, state = self.dynamics(state, action)
 
-            losses.append(loss_r(true_reward, reward) +
-                          loss_v(z_k, value) + loss_p(action, policy) + regularization())
+            losses.append(loss_r(true_reward, reward)
+                          + loss_v(z_k, value)
+                          + loss_p(action, policy)
+                          + regularization())
 
         return tf.reduce_mean(losses)
 
