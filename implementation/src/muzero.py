@@ -88,4 +88,4 @@ class MuZeroPSO(MuZeroBase):
 
         best_index = tf.argmax(value)
 
-        return [action[best_index] for action in actions], value[best_index]
+        return actions[0][best_index], value[best_index]
