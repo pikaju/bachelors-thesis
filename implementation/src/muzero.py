@@ -59,22 +59,30 @@ class MuZeroPSO(MuZeroBase):
         super().__init__(representation, dynamics, prediction)
 
     @tf.function
-    def plan(self, obs, action_sampler, discount, num_particles=4, depth=4):
+    def plan(
+        self,
+        obs,
+        action_sampler,
+        discount_factor,
+        num_particles,
+        depth,
+    ):
         obs = tf.expand_dims(obs, 0)
         initial_state = self.representation(obs)
         state = tf.repeat(initial_state, repeats=[num_particles], axis=0)
 
         actions = []
-        total_reward = 0
+        total_reward = tf.zeros([num_particles])
         for i in range(depth):
             policy, value = self.prediction(state)
             action = action_sampler(policy)
             actions.append(action)
             reward, state = self.dynamics(state, action)
-            total_reward += reward * (discount ** i)
+            discounted_reward = reward * (discount_factor ** i)
+            total_reward += discounted_reward
 
         _, final_value = self.prediction(state)
-        value = final_value * (discount ** depth) + total_reward
+        value = final_value * (discount_factor ** depth) + total_reward
 
         best_index = tf.argmax(value)
 
