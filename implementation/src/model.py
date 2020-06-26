@@ -136,7 +136,7 @@ def define_prediction(env):
         if isinstance(env.action_space, gym.spaces.Discrete):
             return tf.reshape(tf.random.categorical(policy, num_samples=1), [-1])
         else:
-            return tf.random.normal([None, 2], mean=policy)
+            return tf.map_fn(lambda x: tf.random.normal([1], mean=x), policy)
 
     return prediction, action_sampler, [*prediction_policy_path.trainable_variables, *prediction_value_path.trainable_variables]
 

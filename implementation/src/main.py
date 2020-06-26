@@ -102,7 +102,7 @@ def benchmark():
 
 def test():
     run_env(
-        env_name='CartPole-v1',
+        env_name='LunarLanderContinuous-v2',
         learning_rate=0.005,
         replay_buffer_size=1500,
         discount_factor=0.95,
