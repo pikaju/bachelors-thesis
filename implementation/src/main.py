@@ -40,8 +40,13 @@ def run_env(env_name,
             if render:
                 env.render()
 
-            action = muzero.plan(obs_t, action_sampler, discount_factor,
-                                 num_particles=32, depth=4)[0][0].numpy()
+            action = muzero.plan(
+                obs=obs_t,
+                action_sampler=action_sampler,
+                discount_factor=tf.constant(discount_factor, tf.float32),
+                num_particles=tf.constant(32, tf.int32),
+                depth=4
+            )[0][0].numpy()
 
             obs_tp1, reward, done, _ = env.step(action)
             total_reward += reward
@@ -68,8 +73,18 @@ def run_env(env_name,
             dones = [tf.constant(x, tf.bool) for x in zip(*dones)]
 
             with tf.GradientTape() as tape:
-                loss = muzero.loss(obs, actions, rewards, obs_tp1,
-                                   dones, discount_factor, loss_r, loss_v, loss_p, regularization)
+                loss = muzero.loss(
+                    obs,
+                    actions,
+                    rewards,
+                    obs_tp1,
+                    dones,
+                    tf.constant(discount_factor, tf.float32),
+                    loss_r,
+                    loss_v,
+                    loss_p,
+                    regularization,
+                )
             gradients = tape.gradient(loss, variables)
             optimizer.apply_gradients(zip(gradients, variables))
 
