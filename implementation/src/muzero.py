@@ -16,7 +16,19 @@ class MuZeroBase:
         return policy, value, reward
 
     @tf.function
-    def loss(self, obs_t, actions, rewards, obs_tp1, dones, discount, loss_r, loss_v, loss_p, regularization):
+    def loss(
+        self,
+        obs_t,
+        actions,
+        rewards,
+        obs_tp1,
+        dones,
+        discount,
+        loss_r,
+        loss_v,
+        loss_p,
+        regularization,
+    ):
         losses = []
         state = self.representation(obs_t[0])
 
