@@ -14,6 +14,8 @@ from multiprocessing import Pool
 
 
 def run_env(env_name,
+            num_particles=32,
+            search_depth=4,
             discount_factor=0.8,
             replay_buffer_size=1024,
             learning_rate=0.005,
@@ -21,12 +23,15 @@ def run_env(env_name,
             value_lr=1.0,
             policy_lr=1.0,
             regularization_lr=0.001,
+            training_iterations=16,
             epsilon=0.1,
             batch_size=512,
-            max_epochs=250,
+            max_episodes=256,
             render=True):
     writer = tf.summary.create_file_writer(
-        'logs/run-{}df-{}rbs-{}lr-{}rlr-{}-vlr-{}plr-{}reglr-{}eps-{}bs'.format(
+        'logs/run-{}np-{}sd-{}df-{}rbs-{}lr-{}rlr-{}-vlr-{}plr-{}reglr-{}iter-{}eps-{}bs'.format(
+            num_particles,
+            search_depth,
             discount_factor,
             replay_buffer_size,
             learning_rate,
@@ -34,6 +39,7 @@ def run_env(env_name,
             value_lr,
             policy_lr,
             regularization_lr,
+            training_iterations,
             epsilon,
             batch_size
         )
@@ -57,8 +63,8 @@ def run_env(env_name,
 
     optimizer = tf.optimizers.Adam(learning_rate)
 
-    epoch = 0
-    while max_epochs is None or epoch < max_epochs:
+    episode = 0
+    while max_episodes is None or episode < max_episodes:
         obs_t = env.reset()
         total_reward = 0
         while True:
@@ -70,8 +76,8 @@ def run_env(env_name,
                     obs=obs_t,
                     action_sampler=action_sampler,
                     discount_factor=tf.constant(discount_factor, tf.float32),
-                    num_particles=tf.constant(64, tf.int32),
-                    depth=4
+                    num_particles=tf.constant(num_particles, tf.int32),
+                    depth=search_depth
                 )]
             else:
                 action = env.action_space.sample()
@@ -83,14 +89,13 @@ def run_env(env_name,
             if done:
                 break
             obs_t = obs_tp1
-        epoch += 1
 
         with writer.as_default():
-            tf.summary.scalar('total_reward', total_reward, step=epoch)
+            tf.summary.scalar('total_reward', total_reward, step=episode)
 
         # Training phase
-        for _ in range(16):
-            batch = replay_buffer.sample(batch_size, 5)
+        for _ in range(training_iterations):
+            batch = replay_buffer.sample(batch_size, search_depth + 1)
 
             obs, actions, rewards, obs_tp1, dones = zip(
                 *[zip(*entry) for entry in batch])
@@ -118,35 +123,46 @@ def run_env(env_name,
             optimizer.apply_gradients(zip(gradients, variables))
 
             with writer.as_default():
-                tf.summary.scalar('loss', loss, step=epoch)
-                tf.summary.scalar('loss_r', losses[0], step=epoch)
-                tf.summary.scalar('loss_v', losses[1], step=epoch)
-                tf.summary.scalar('loss_p', losses[2], step=epoch)
-                tf.summary.scalar('loss_reg', losses[3], step=epoch)
+                tf.summary.scalar('loss', loss, step=episode)
+                tf.summary.scalar('loss_r', losses[0], step=episode)
+                tf.summary.scalar('loss_v', losses[1], step=episode)
+                tf.summary.scalar('loss_p', losses[2], step=episode)
+                tf.summary.scalar('loss_reg', losses[3], step=episode)
+
+        episode += 1
 
 
 def benchmark():
-    pool = Pool(16)
-    for batch_size in [512]:
-        for discount_factor in [0.99, 0.995, 0.999]:
-            for replay_buffer_size in [8192, 4096, 2048]:
-                for learning_rate in [0.001, 0.005, 0.0005]:
-                    for epsilon in [0.1]:
-                        pool.apply_async(run_env, kwds={
-                            'env_name': 'LunarLander-v2',
-                            'learning_rate': learning_rate,
-                            'epsilon': epsilon,
-                            'replay_buffer_size': replay_buffer_size,
-                            'discount_factor': discount_factor,
-                            'batch_size': batch_size,
-                            'render': False,
-                            'max_epochs': None,
-                        })
-
     import time
+
+    pool = Pool(6)
+    tasks = []
     while True:
+        for task in tasks:
+            if task.ready():
+                tasks.remove(task)
+
+        if len(tasks) < 12:
+            params = {
+                'env_name': 'LunarLander-v2',
+                'num_particles': random.randrange(8, 128),
+                'search_depth': random.randrange(1, 16),
+                'learning_rate': random.uniform(0.03, 0.0001),
+                'reward_lr': random.uniform(10.0, 0.1),
+                'value_lr': random.uniform(10.0, 0.1),
+                'policy_lr': random.uniform(10.0, 0.1),
+                'regularization_lr': random.uniform(10.0, 0.1),
+                'training_iterations': random.randrange(8, 128),
+                'replay_buffer_size': random.randrange(1024, 32000),
+                'discount_factor': random.uniform(0.9, 0.9999),
+                'batch_size': random.randrange(128, 512),
+                'max_episodes': 256,
+                'render': False,
+            }
+            tasks.append(pool.apply_async(run_env, kwds=params))
+
         try:
-            time.sleep(100)
+            time.sleep(0.1)
         except KeyboardInterrupt:
             return
 
@@ -159,12 +175,12 @@ def test():
         replay_buffer_size=1024,
         discount_factor=0.95,
         batch_size=512,
-        max_epochs=None,
+        max_episodes=None,
     )
 
 
 def main():
-    test()
+    benchmark()
 
 
 if __name__ == '__main__':
