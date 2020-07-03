@@ -84,8 +84,8 @@ def run_env(env_name,
                 action = env.action_space.sample()
 
             obs_tp1, reward, done, _ = env.step(action)
-            reward *= reward_factor
             total_reward += reward
+            reward *= reward_factor
             replay_buffer.add(obs_t, action, reward, obs_tp1, done)
 
             if done:
@@ -146,8 +146,8 @@ def benchmark():
 
         if len(tasks) < 12:
             params = {
-                'env_name': 'CartPole-v1',
-                'reward_factor': 1.0,
+                'env_name': 'LunarLander-v2',
+                'reward_factor': 0.1,
                 'num_particles': random.randrange(8, 128),
                 'search_depth': random.randrange(1, 16),
                 'learning_rate': random.uniform(0.03, 0.0001),
