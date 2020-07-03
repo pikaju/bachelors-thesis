@@ -29,7 +29,7 @@ class MuZeroBase:
         loss_p,
         regularization,
     ):
-        losses = []
+        r_losses, v_losses, p_losses, reg_losses = [], [], [], []
         state = self.representation(obs_t[0])
 
         bootstrapped_value = (
@@ -48,12 +48,12 @@ class MuZeroBase:
             policy, value = self.prediction(state)
             reward, state = self.dynamics(state, action)
 
-            losses.append(loss_r(true_reward, reward)
-                          + loss_v(z_k, value)
-                          + loss_p(action, policy)
-                          + regularization())
+            r_losses.append(loss_r(true_reward, reward))
+            v_losses.append(loss_v(z_k, value))
+            p_losses.append(loss_p(action, policy))
+            reg_losses.append(regularization())
 
-        return tf.reduce_mean(losses)
+        return [tf.reduce_mean(losses) for losses in [r_losses, v_losses, p_losses, reg_losses]]
 
 
 class MuZeroPSO(MuZeroBase):

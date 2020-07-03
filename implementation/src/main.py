@@ -40,13 +40,14 @@ def run_env(env_name,
             if render:
                 env.render()
 
-            action = muzero.plan(
+            action, value = [x.numpy() for x in muzero.plan(
                 obs=obs_t,
                 action_sampler=action_sampler,
                 discount_factor=tf.constant(discount_factor, tf.float32),
                 num_particles=tf.constant(32, tf.int32),
                 depth=4
-            )[0].numpy()
+            )]
+            print(value)
 
             obs_tp1, reward, done, _ = env.step(action)
             total_reward += reward
@@ -73,7 +74,7 @@ def run_env(env_name,
             dones = [tf.constant(x, tf.bool) for x in zip(*dones)]
 
             with tf.GradientTape() as tape:
-                loss = muzero.loss(
+                losses = muzero.loss(
                     obs,
                     actions,
                     rewards,
@@ -85,11 +86,16 @@ def run_env(env_name,
                     loss_p,
                     regularization,
                 )
+                loss = tf.reduce_mean(losses)
             gradients = tape.gradient(loss, variables)
             optimizer.apply_gradients(zip(gradients, variables))
 
             with writer.as_default():
                 tf.summary.scalar('loss', loss, step=epoch)
+                tf.summary.scalar('loss_r', losses[0], step=epoch)
+                tf.summary.scalar('loss_v', losses[1], step=epoch)
+                tf.summary.scalar('loss_p', losses[2], step=epoch)
+                tf.summary.scalar('loss_reg', losses[3], step=epoch)
 
 
 def benchmark():
@@ -117,7 +123,7 @@ def benchmark():
 
 def test():
     run_env(
-        env_name='LunarLanderContinuous-v2',
+        env_name='CartPole-v0',
         learning_rate=0.005,
         replay_buffer_size=1500,
         discount_factor=0.95,
