@@ -17,17 +17,40 @@ def run_env(env_name,
             discount_factor=0.8,
             replay_buffer_size=1024,
             learning_rate=0.005,
+            reward_lr=1.0,
+            value_lr=1.0,
+            policy_lr=1.0,
+            regularization_lr=0.001,
             batch_size=512,
             max_epochs=250,
             render=True):
     writer = tf.summary.create_file_writer(
-        'logs/run-{}-{}-{}-{}'.format(discount_factor, replay_buffer_size, learning_rate, batch_size))
+        'logs/run-{}df-{}rbs-{}lr-{}rlr-{}-vlr-{}plr-{}reglr-{}bs'.format(
+            discount_factor,
+            replay_buffer_size,
+            learning_rate,
+            reward_lr,
+            value_lr,
+            policy_lr,
+            reward_lr,
+            batch_size,
+        )
+    )
 
     env = gym.make(env_name)
     replay_buffer = ReplayBuffer(replay_buffer_size)
     representation, dynamics, prediction, action_sampler, variables = define_model(
         env)
-    loss_r, loss_v, loss_p, regularization = define_losses(env, variables)
+
+    loss_r, loss_v, loss_p, regularization = define_losses(
+        env,
+        variables,
+        reward_lr,
+        value_lr,
+        policy_lr,
+        regularization_lr,
+    )
+
     muzero = MuZeroPSO(representation, dynamics, prediction)
 
     optimizer = tf.optimizers.Adam(learning_rate)
@@ -47,7 +70,6 @@ def run_env(env_name,
                 num_particles=tf.constant(32, tf.int32),
                 depth=4
             )]
-            print(value)
 
             obs_tp1, reward, done, _ = env.step(action)
             total_reward += reward
@@ -100,18 +122,24 @@ def run_env(env_name,
 
 def benchmark():
     pool = Pool(6)
-    for batch_size in [512, 256]:
-        for discount_factor in [0.95, 0.99, 0.8]:
-            for replay_buffer_size in [1024, 1500]:
-                for learning_rate in [0.01, 0.005, 0.02, 0.002]:
-                    pool.apply_async(run_env, kwds={
-                        'env_name': 'LunarLander-v2',
-                        'learning_rate': learning_rate,
-                        'replay_buffer_size': replay_buffer_size,
-                        'discount_factor': discount_factor,
-                        'batch_size': batch_size,
-                        'render': False,
-                    })
+    for batch_size in [512]:
+        for discount_factor in [0.95]:
+            for replay_buffer_size in [4096]:
+                for learning_rate in [0.005]:
+                    for reward_lr in [1.0, 5.0, 0.2]:
+                        for value_lr in [1.0, 5.0, 0.2]:
+                            for policy_lr in [1.0, 5.0, 0.2]:
+                                pool.apply_async(run_env, kwds={
+                                    'env_name': 'LunarLander-v2',
+                                    'learning_rate': learning_rate,
+                                    'reward_lr': reward_lr,
+                                    'value_lr': value_lr,
+                                    'policy_lr': policy_lr,
+                                    'replay_buffer_size': replay_buffer_size,
+                                    'discount_factor': discount_factor,
+                                    'batch_size': batch_size,
+                                    'render': False,
+                                })
 
     import time
     while True:
@@ -123,7 +151,7 @@ def benchmark():
 
 def test():
     run_env(
-        env_name='CartPole-v0',
+        env_name='LunarLander-v2',
         learning_rate=0.005,
         replay_buffer_size=1500,
         discount_factor=0.95,

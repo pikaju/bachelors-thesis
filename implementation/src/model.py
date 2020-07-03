@@ -155,24 +155,24 @@ def define_model(env):
     return representation, dynamics, prediction, action_sampler, variables
 
 
-def define_losses(env, variables):
+def define_losses(env, variables, reward_lr, value_lr, policy_lr, regularization_lr):
     @tf.function
     def loss_r(true, pred):
-        return tf.losses.MSE(true, pred)
+        return tf.losses.MSE(true, pred) * reward_lr
 
     @tf.function
     def loss_v(true, pred):
-        return tf.losses.MSE(true, pred)
+        return tf.losses.MSE(true, pred) * value_lr
 
     @tf.function
     def loss_p(action, policy):
         if isinstance(env.action_space, gym.spaces.Discrete):
-            return tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(action, policy))
+            return tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(action, policy)) * policy_lr
         else:
-            return tf.losses.MSE(action, policy)
+            return tf.losses.MSE(action, policy) * policy_lr
 
     @tf.function
     def regularization():
-        return tf.add_n([tf.nn.l2_loss(variable) for variable in variables]) * 0.001
+        return tf.add_n([tf.nn.l2_loss(variable) for variable in variables]) * regularization_lr
 
     return loss_r, loss_v, loss_p, regularization
