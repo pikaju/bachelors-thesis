@@ -29,7 +29,13 @@ class MuZeroBase:
         loss_p,
         regularization,
     ):
-        r_losses, v_losses, p_losses, reg_losses = [], [], [], []
+        @tf.function
+        def scale_gradient(tensor):
+            """Scales the gradient for the backward pass."""
+            gradient_scale = 0.5
+            return tensor * gradient_scale + tf.stop_gradient(tensor) * (1 - gradient_scale)
+
+        r_losses, v_losses, p_losses, reg_losses = 0.0, 0.0, 0.0, 0.0
         state = self.representation(obs_t[0])
 
         bootstrapped_value = (
@@ -46,14 +52,14 @@ class MuZeroBase:
 
         for _, action, true_reward, _, z_k in zip(obs_t, actions, rewards, obs_tp1, z):
             policy, value = self.prediction(state)
-            reward, state = self.dynamics(state, action)
+            reward, state = self.dynamics(scale_gradient(state), action)
 
-            r_losses.append(loss_r(true_reward, reward))
-            v_losses.append(loss_v(z_k, value))
-            p_losses.append(loss_p(action, policy))
-            reg_losses.append(regularization())
+            r_losses += tf.reduce_mean(loss_r(true_reward, reward))
+            v_losses += tf.reduce_mean(loss_v(z_k, value))
+            p_losses += tf.reduce_mean(loss_p(action, policy))
+            reg_losses += tf.reduce_mean(regularization())
 
-        return [tf.reduce_mean(losses) for losses in [r_losses, v_losses, p_losses, reg_losses]]
+        return [losses / len(obs_t) for losses in [r_losses, v_losses, p_losses, reg_losses]]
 
 
 class MuZeroPSO(MuZeroBase):

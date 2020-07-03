@@ -50,11 +50,6 @@ def define_dynamics(env):
             input_shape=(state_shape + action_shape,),
             kernel_initializer='he_normal',
         ),
-        tf.keras.layers.Dense(
-            state_shape,
-            activation=activation,
-            kernel_initializer='he_normal',
-        ),
     ])
     dynamics_reward_head = tf.keras.Sequential([
         tf.keras.layers.Dense(
@@ -82,7 +77,9 @@ def define_dynamics(env):
         if isinstance(env.action_space, gym.spaces.Discrete):
             action = tf.one_hot(action, action_shape, axis=-1)
         state_action = tf.concat((state, action), axis=1)
-        return (tf.reshape(dynamics_reward_path(state_action), [-1]), dynamics_state_path(state_action))
+        reward = tf.reshape(dynamics_reward_path(state_action), [-1])
+        state = dynamics_state_path(state_action)
+        return (reward, state)
 
     return dynamics, [*dynamics_reward_path.trainable_variables, *dynamics_state_path.trainable_variables]
 
@@ -98,11 +95,6 @@ def define_prediction(env):
             state_shape,
             activation=activation,
             input_shape=(state_shape,),
-            kernel_initializer='he_normal',
-        ),
-        tf.keras.layers.Dense(
-            action_shape * 2,
-            activation=activation,
             kernel_initializer='he_normal',
         ),
     ])
