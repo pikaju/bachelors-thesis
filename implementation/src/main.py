@@ -14,6 +14,7 @@ from multiprocessing import Pool
 
 
 def run_env(env_name,
+            reward_factor=1.0,
             num_particles=32,
             search_depth=4,
             discount_factor=0.8,
@@ -83,6 +84,7 @@ def run_env(env_name,
                 action = env.action_space.sample()
 
             obs_tp1, reward, done, _ = env.step(action)
+            reward *= reward_factor
             total_reward += reward
             replay_buffer.add(obs_t, action, reward, obs_tp1, done)
 
@@ -144,19 +146,20 @@ def benchmark():
 
         if len(tasks) < 12:
             params = {
-                'env_name': 'LunarLander-v2',
+                'env_name': 'CartPole-v1',
+                'reward_factor': 1.0,
                 'num_particles': random.randrange(8, 128),
                 'search_depth': random.randrange(1, 16),
                 'learning_rate': random.uniform(0.03, 0.0001),
                 'reward_lr': random.uniform(10.0, 0.1),
                 'value_lr': random.uniform(10.0, 0.1),
                 'policy_lr': random.uniform(10.0, 0.1),
-                'regularization_lr': random.uniform(10.0, 0.1),
+                'regularization_lr': random.uniform(0.01, 0.0001),
                 'training_iterations': random.randrange(8, 128),
                 'replay_buffer_size': random.randrange(1024, 32000),
                 'discount_factor': random.uniform(0.9, 0.9999),
                 'batch_size': random.randrange(128, 512),
-                'max_episodes': 256,
+                'max_episodes': 100,
                 'render': False,
             }
             tasks.append(pool.apply_async(run_env, kwds=params))
@@ -169,7 +172,7 @@ def benchmark():
 
 def test():
     run_env(
-        env_name='CartPole-v1',
+        env_name='Pendulum-v0',
         learning_rate=0.005,
         epsilon=0.05,
         replay_buffer_size=1024,
