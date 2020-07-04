@@ -35,9 +35,13 @@ class MuZeroBase:
             gradient_scale = 0.5
             return tensor * gradient_scale + tf.stop_gradient(tensor) * (1 - gradient_scale)
 
+        rollout_size = len(obs_t)
+        batch_size = len(obs_t[0])
+
         r_losses, v_losses, p_losses, reg_losses = 0.0, 0.0, 0.0, 0.0
         state = self.representation(obs_t[0])
 
+        _, initial_value = self.prediction(state)
         bootstrapped_value = (
             1 - tf.cast(dones[-1], tf.float32)) * self.prediction(self.representation(obs_tp1[-1]))[-1]
         bootstrapped_value = tf.stop_gradient(bootstrapped_value)
@@ -54,12 +58,14 @@ class MuZeroBase:
             policy, value = self.prediction(state)
             reward, state = self.dynamics(scale_gradient(state), action)
 
-            r_losses += tf.reduce_mean(loss_r(true_reward, reward))
-            v_losses += tf.reduce_mean(loss_v(z_k, value))
-            p_losses += tf.reduce_mean(loss_p(action, policy))
-            reg_losses += tf.reduce_mean(regularization())
+            r_losses += loss_r(true_reward, reward) / rollout_size
+            v_losses += loss_v(z_k, value) / rollout_size
+            p_losses += loss_p(action, policy) / rollout_size
+            reg_losses += tf.repeat(regularization(),
+                                    repeats=[batch_size]) / rollout_size
 
-        return [losses / len(obs_t) for losses in [r_losses, v_losses, p_losses, reg_losses]]
+        priorities = tf.abs(z[0] - initial_value)
+        return [r_losses, v_losses, p_losses, reg_losses], priorities
 
 
 class MuZeroPSO(MuZeroBase):
