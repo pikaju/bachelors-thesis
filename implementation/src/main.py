@@ -73,22 +73,22 @@ def run_env(env_name,
             if render:
                 env.render()
 
-            if random.uniform(0, 1) > epsilon:
-                action, value = [x.numpy() for x in muzero.plan(
-                    obs=obs_t,
-                    action_sampler=action_sampler,
-                    discount_factor=tf.constant(discount_factor, tf.float32),
-                    num_particles=tf.constant(num_particles, tf.int32),
-                    depth=search_depth
-                )]
-            else:
+            action, value = [x.numpy() for x in muzero.plan(
+                obs=obs_t,
+                action_sampler=action_sampler,
+                discount_factor=tf.constant(discount_factor, tf.float32),
+                num_particles=tf.constant(num_particles, tf.int32),
+                depth=search_depth
+            )]
+            print(value)
+            if random.uniform(0, 1) < epsilon:
                 action = env.action_space.sample()
-                value = 0.0
 
             obs_tp1, reward, done, _ = env.step(action)
             total_reward += reward
             reward *= reward_factor
-            replay_buffer.add(1.0, (obs_t, action, reward, obs_tp1, done))
+            replay_buffer.add(
+                1.0, (obs_t, value, action, reward, obs_tp1, done))
 
             if done:
                 break
@@ -101,9 +101,10 @@ def run_env(env_name,
         for _ in range(training_iterations):
             batch = replay_buffer.sample(batch_size, search_depth + 1)
 
-            obs, actions, rewards, obs_tp1, dones = zip(
+            obs, values, actions, rewards, obs_tp1, dones = zip(
                 *[zip(*entry[-1]) for entry in batch])
             obs = [tf.constant(x, tf.float32) for x in zip(*obs)]
+            values = [tf.constant(x, tf.float32) for x in zip(*values)]
             actions = [tf.constant(x) for x in zip(*actions)]
             rewards = [tf.constant(x, tf.float32) for x in zip(*rewards)]
             obs_tp1 = [tf.constant(x, tf.float32) for x in zip(*obs_tp1)]
@@ -114,6 +115,7 @@ def run_env(env_name,
             with tf.GradientTape() as tape:
                 losses, priorities = muzero.loss(
                     obs,
+                    values,
                     actions,
                     rewards,
                     obs_tp1,
@@ -130,7 +132,6 @@ def run_env(env_name,
                 total_loss = tf.reduce_sum(weighted_losses)
 
                 # Update replay buffer priorities
-                print(priorities)
                 for element, priority in zip(batch, priorities):
                     replay_buffer.update(element[0], priority)
 

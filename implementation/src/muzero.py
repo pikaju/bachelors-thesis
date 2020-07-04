@@ -19,6 +19,7 @@ class MuZeroBase:
     def loss(
         self,
         obs_t,
+        values,
         actions,
         rewards,
         obs_tp1,
@@ -41,10 +42,7 @@ class MuZeroBase:
         r_losses, v_losses, p_losses, reg_losses = 0.0, 0.0, 0.0, 0.0
         state = self.representation(obs_t[0])
 
-        _, initial_value = self.prediction(state)
-        bootstrapped_value = (
-            1 - tf.cast(dones[-1], tf.float32)) * self.prediction(self.representation(obs_tp1[-1]))[-1]
-        bootstrapped_value = tf.stop_gradient(bootstrapped_value)
+        bootstrapped_value = (1 - tf.cast(dones[-1], tf.float32)) * values[-1]
 
         z = []
         for i in range(len(rewards)):
@@ -64,7 +62,7 @@ class MuZeroBase:
             reg_losses += tf.repeat(regularization(),
                                     repeats=[batch_size]) / rollout_size
 
-        priorities = tf.abs(z[0] - initial_value)
+        priorities = tf.abs(z[0] - values[0])
         return [r_losses, v_losses, p_losses, reg_losses], priorities
 
 
