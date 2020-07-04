@@ -17,30 +17,33 @@ class PrioritizedReplayBuffer:
     def update(self, index, priority):
         self._priorities[index] = priority
 
-    def _try_sample_single(self, batch_size, unroll):
+    def sample(self, batch_size, rollout_size):
+        batch = []
         probabilities = self._priorities / np.sum(self._priorities)
-        index = np.random.choice(probabilities.shape[0], p=probabilities)
 
-        unrolled = np.zeros([unroll], dtype=object)
-        for offset in range(unroll):
-            storage_index = (index + offset) % self.size
-            # The write head breaks experience chains.
-            if storage_index == self._write_head:
-                return None
-            # Don't allow done = True in the middle of a rollout.
-            if offset < unroll - 1 and self._storage[storage_index][-1]:
-                return None
-            unrolled[offset] = self._storage[storage_index]
+        def unroll(index):
+            unrolled = np.zeros([rollout_size], dtype=object)
+            for offset in range(rollout_size):
+                storage_index = (index + offset) % self.size
+                # The write head breaks experience chains.
+                if storage_index == self._write_head:
+                    return None
+                # Don't allow done = True in the middle of a rollout.
+                if offset < rollout_size - 1 and self._storage[storage_index][-1]:
+                    return None
+                unrolled[offset] = self._storage[storage_index]
+            return unrolled
 
-        probability = probabilities[index]
-        weight = ((1.0 / batch_size) * (1.0 / probability)) ** self.beta
-        return index, probability, weight, unrolled
+        while len(batch) < batch_size:
+            indices = np.random.choice(
+                self.size, batch_size - len(batch), p=probabilities)
 
-    def _sample_single(self, batch_size, unroll):
-        while True:
-            sample = self._try_sample_single(batch_size, unroll)
-            if sample != None:
-                return sample
+            for index in indices:
+                unrolled = unroll(index)
+                if unrolled is not None:
+                    probability = probabilities[index]
+                    weight = ((1.0 / batch_size) *
+                              (1.0 / probability)) ** self.beta
+                    batch.append((index, probability, weight, unrolled))
 
-    def sample(self, batch_size, unroll):
-        return [self._sample_single(batch_size, unroll) for _ in range(batch_size)]
+        return batch
