@@ -193,7 +193,7 @@ def test():
         learning_rate=0.005,
         epsilon=0.05,
         training_iterations=32,
-        replay_buffer_size=32000,
+        replay_buffer_size=2048,
         discount_factor=0.95,
         batch_size=128,
         max_episodes=None,
