@@ -6,6 +6,11 @@ state_shape = 32
 activation = tf.nn.relu
 
 
+@tf.function
+def scale_state(state):
+    return (state - tf.reduce_min(state, -1, True)) / (tf.reduce_max(state, -1, True) - tf.reduce_min(state, -1, True))
+
+
 def define_representation(env):
     obs_shape = env.observation_space.shape
     representation_path = tf.keras.Sequential([
@@ -32,7 +37,7 @@ def define_representation(env):
     @tf.function
     def representation(obs):
         if isinstance(env.observation_space, gym.spaces.Box):
-            return representation_path((tf.cast(obs, tf.float32) - low) / (high - low) * 2.0 - 1.0)
+            return scale_state(representation_path((tf.cast(obs, tf.float32) - low) / (high - low) * 2.0 - 1.0))
 
     return representation, representation_path.trainable_variables
 
@@ -79,7 +84,7 @@ def define_dynamics(env):
         state_action = tf.concat((state, action), axis=1)
         reward = tf.reshape(dynamics_reward_path(state_action), [-1])
         state = dynamics_state_path(state_action)
-        return (reward, state)
+        return (reward, scale_state(state))
 
     return dynamics, [*dynamics_reward_path.trainable_variables, *dynamics_state_path.trainable_variables]
 
