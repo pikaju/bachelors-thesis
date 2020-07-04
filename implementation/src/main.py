@@ -88,7 +88,7 @@ def run_env(env_name,
             total_reward += reward
             reward *= reward_factor
             replay_buffer.add(
-                1.0, (obs_t, value, action, reward, obs_tp1, done))
+                128.0, (obs_t, value, action, reward, obs_tp1, done))
 
             if done:
                 break
@@ -131,9 +131,9 @@ def run_env(env_name,
                 ]
                 total_loss = tf.reduce_sum(weighted_losses)
 
-                # Update replay buffer priorities
-                for element, priority in zip(batch, priorities):
-                    replay_buffer.update(element[0], priority)
+            # Update replay buffer priorities
+            for element, priority in zip(batch, priorities.numpy()):
+                replay_buffer.update(element[0], priority)
 
             gradients = tape.gradient(total_loss, variables)
             optimizer.apply_gradients(zip(gradients, variables))
@@ -163,17 +163,17 @@ def benchmark():
                 'env_name': 'LunarLanderContinuous-v2',
                 'reward_factor': 1.0,
                 'num_particles': 32,
-                'search_depth': random.randrange(1, 3),
+                'search_depth': random.randrange(1, 5),
                 'learning_rate': random.uniform(0.005, 0.0001),
                 'reward_lr': random.uniform(10.0, 0.1),
                 'value_lr': random.uniform(10.0, 0.1),
                 'policy_lr': random.uniform(10.0, 0.1),
                 'regularization_lr': random.uniform(0.005, 0.0005),
-                'training_iterations': random.randrange(64, 256),
-                'replay_buffer_size': random.randrange(20000, 40000),
+                'training_iterations': random.randrange(16, 256),
+                'replay_buffer_size': random.randrange(4000, 40000),
                 'discount_factor': random.uniform(0.95, 0.999),
                 'batch_size': random.randrange(128, 512),
-                'max_episodes': 200,
+                'max_episodes': 100,
                 'render': False,
             }
             tasks.append(pool.apply_async(run_env, kwds=params))
@@ -192,10 +192,10 @@ def test():
         search_depth=4,
         learning_rate=0.005,
         epsilon=0.05,
-        training_iterations=16,
-        replay_buffer_size=1024,
+        training_iterations=32,
+        replay_buffer_size=32000,
         discount_factor=0.95,
-        batch_size=512,
+        batch_size=128,
         max_episodes=None,
     )
 
