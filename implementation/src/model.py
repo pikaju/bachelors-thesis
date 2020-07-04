@@ -2,7 +2,7 @@ import tensorflow as tf
 import gym
 
 
-state_shape = 8
+state_shape = 32
 activation = tf.nn.relu
 
 
@@ -10,7 +10,7 @@ def define_representation(env):
     obs_shape = env.observation_space.shape
     representation_path = tf.keras.Sequential([
         tf.keras.layers.Dense(
-            8,
+            32,
             activation=activation,
             input_shape=obs_shape,
             kernel_initializer='he_normal',
@@ -121,14 +121,15 @@ def define_prediction(env):
 
     @tf.function
     def prediction(state):
-        return (prediction_policy_path(state), tf.reshape(prediction_value_path(state), [-1]))
+        return (prediction_policy_path(state) * 0.0, tf.reshape(prediction_value_path(state), [-1]))
 
     @tf.function
     def action_sampler(policy):
         if isinstance(env.action_space, gym.spaces.Discrete):
             return tf.reshape(tf.random.categorical(policy, num_samples=1), [-1])
         else:
-            return tf.map_fn(lambda x: tf.random.normal([1], mean=x), policy)
+            # return tf.map_fn(lambda x: tf.random.normal([1], mean=x), policy)
+            return tf.random.normal([32, action_shape])
 
     return prediction, action_sampler, [*prediction_policy_path.trainable_variables, *prediction_value_path.trainable_variables]
 
