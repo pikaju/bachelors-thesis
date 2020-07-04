@@ -2,9 +2,10 @@ import numpy as np
 
 
 class PrioritizedReplayBuffer:
-    def __init__(self, size):
+    def __init__(self, size, alpha=0.7, beta=0.7):
         self.size = size
-        self.beta = 1.0
+        self.alpha = alpha
+        self.beta = beta
         self._storage = np.zeros([size], dtype=object)
         self._priorities = np.zeros([size])
         self._write_head = 0
@@ -19,7 +20,8 @@ class PrioritizedReplayBuffer:
 
     def sample(self, batch_size, rollout_size):
         batch = []
-        probabilities = self._priorities / np.sum(self._priorities)
+        scaled_priorities = np.power(self._priorities, self.alpha)
+        probabilities = scaled_priorities / np.sum(scaled_priorities)
 
         def unroll(index):
             unrolled = np.zeros([rollout_size], dtype=object)
