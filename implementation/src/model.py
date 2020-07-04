@@ -150,10 +150,14 @@ def define_model(env):
 def define_losses(env, variables, reward_lr, value_lr, policy_lr, regularization_lr):
     @tf.function
     def loss_r(true, pred):
+        true = tf.expand_dims(true, 1)
+        pred = tf.expand_dims(pred, 1)
         return tf.losses.MSE(true, pred) * reward_lr
 
     @tf.function
     def loss_v(true, pred):
+        true = tf.expand_dims(true, 1)
+        pred = tf.expand_dims(pred, 1)
         return tf.losses.MSE(true, pred) * value_lr
 
     @tf.function
