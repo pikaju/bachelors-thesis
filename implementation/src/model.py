@@ -131,7 +131,8 @@ def define_prediction(env):
     @tf.function
     def action_sampler(policy):
         if isinstance(env.action_space, gym.spaces.Discrete):
-            return tf.reshape(tf.random.categorical(policy, num_samples=1), [-1])
+            # return tf.reshape(tf.random.categorical(policy, num_samples=1), [-1])
+            return tf.reshape(tf.random.categorical(policy * 0.0, num_samples=1), [-1])
         else:
             # return tf.map_fn(lambda x: tf.random.normal([1], mean=x), policy)
             return tf.random.normal([32, action_shape])
