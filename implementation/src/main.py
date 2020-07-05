@@ -160,20 +160,20 @@ def benchmark():
 
         if len(tasks) < 12:
             params = {
-                'env_name': 'LunarLanderContinuous-v2',
-                'reward_factor': 1.0,
+                'env_name': 'Pendulum-v0',
+                'reward_factor': 0.1,
                 'num_particles': 32,
                 'search_depth': random.randrange(1, 5),
-                'learning_rate': random.uniform(0.005, 0.0001),
+                'learning_rate': random.uniform(0.02, 0.0003),
                 'reward_lr': random.uniform(10.0, 0.1),
                 'value_lr': random.uniform(10.0, 0.1),
                 'policy_lr': random.uniform(10.0, 0.1),
                 'regularization_lr': random.uniform(0.005, 0.0005),
-                'training_iterations': random.randrange(16, 256),
-                'replay_buffer_size': random.randrange(4000, 40000),
+                'training_iterations': random.randrange(16, 64),
+                'replay_buffer_size': random.randrange(1024, 16000),
                 'discount_factor': random.uniform(0.95, 0.999),
                 'batch_size': random.randrange(128, 512),
-                'max_episodes': 100,
+                'max_episodes': 200,
                 'render': False,
             }
             tasks.append(pool.apply_async(run_env, kwds=params))
@@ -186,16 +186,18 @@ def benchmark():
 
 def test():
     run_env(
-        env_name='CartPole-v1',
-        reward_factor=1.0,
+        env_name='Pendulum-v0',
+        reward_factor=0.1,
         num_particles=32,
         search_depth=4,
-        learning_rate=0.005,
+        learning_rate=0.01,
+        reward_lr=0.2,
+        value_lr=2.0,
         epsilon=0.05,
         training_iterations=32,
-        replay_buffer_size=2048,
-        discount_factor=0.95,
-        batch_size=128,
+        replay_buffer_size=8192,
+        discount_factor=0.995,
+        batch_size=300,
         max_episodes=None,
     )
 
