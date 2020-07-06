@@ -69,6 +69,7 @@ def run_env(env_name,
     while max_episodes is None or episode < max_episodes:
         obs_t = env.reset()
         total_reward = 0
+        replay_candidate = []
         while True:
             if render:
                 env.render()
@@ -87,8 +88,13 @@ def run_env(env_name,
             obs_tp1, reward, done, _ = env.step(action)
             total_reward += reward
             reward *= reward_factor
-            replay_buffer.add(
-                128.0, (obs_t, value, action, reward, obs_tp1, done))
+
+            replay_candidate.append(
+                (128.0, (obs_t, value, action, reward, obs_tp1, done)))
+            if len(replay_candidate) > search_depth:
+                replay_buffer.add(replay_candidate[0][0], [
+                                  m[1] for m in replay_candidate])
+                replay_candidate.pop(0)
 
             if done:
                 break
@@ -186,18 +192,18 @@ def benchmark():
 
 def test():
     run_env(
-        env_name='Pendulum-v0',
-        reward_factor=0.1,
+        env_name='CartPole-v1',
+        reward_factor=1.1,
         num_particles=32,
         search_depth=4,
-        learning_rate=0.01,
-        reward_lr=0.2,
-        value_lr=2.0,
+        learning_rate=0.005,
+        reward_lr=1.0,
+        value_lr=1.0,
         epsilon=0.05,
         training_iterations=32,
-        replay_buffer_size=8192,
-        discount_factor=0.995,
-        batch_size=300,
+        replay_buffer_size=1024,
+        discount_factor=0.95,
+        batch_size=256,
         max_episodes=None,
     )
 

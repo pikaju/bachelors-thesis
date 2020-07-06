@@ -2,7 +2,7 @@ import tensorflow as tf
 import gym
 
 
-state_shape = 32
+state_shape = 16
 activation = tf.nn.relu
 
 
@@ -15,7 +15,7 @@ def define_representation(env):
     obs_shape = env.observation_space.shape
     representation_path = tf.keras.Sequential([
         tf.keras.layers.Dense(
-            32,
+            16,
             activation=activation,
             input_shape=obs_shape,
             kernel_initializer='he_normal',
