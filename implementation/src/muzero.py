@@ -94,7 +94,7 @@ class MuZeroMCTS(MuZeroBase):
         for _ in range(config.num_simulations):
             node = root
             while True:
-                # Maximize pUCT
+                # Maximize pUCT value based on action.
                 ucbs = [node.puct(action, config.puct_c1, config.puct_c2)
                         for action in range(num_actions)]
                 action = np.argmax(ucbs)
@@ -138,12 +138,14 @@ class MuZeroPSO(MuZeroBase):
         state = tf.repeat(initial_state, repeats=[
                           config.num_particles], axis=0)
 
-        actions = []
-        total_reward = tf.zeros([config.num_particles])
-        for i in range(config.particle_depth):
+        policy, value = self.prediction(state)
+        action = first_action = action_sampler(policy)
+        reward, state = self.dynamics(state, action)
+        total_reward = reward
+
+        for i in tf.range(1, config.particle_depth, dtype=tf.float32):
             policy, value = self.prediction(state)
             action = action_sampler(policy)
-            actions.append(action)
             reward, state = self.dynamics(state, action)
             discounted_reward = reward * (discount_factor ** i)
             total_reward += discounted_reward
@@ -153,5 +155,4 @@ class MuZeroPSO(MuZeroBase):
                                config.particle_depth) + total_reward
 
         best_index = tf.argmax(value)
-
-        return actions[0][best_index], value[best_index]
+        return first_action[best_index], value[best_index]
