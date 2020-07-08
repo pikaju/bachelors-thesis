@@ -81,7 +81,8 @@ class MuZeroMCTS(MuZeroBase):
         discount_factor,
         simulations=16,
         c1=1.25,
-        c2=5000
+        c2=5000,
+        tau=0.5,
     ):
         obs = tf.expand_dims(obs, 0)
         initial_state = self.representation(obs)
@@ -109,8 +110,12 @@ class MuZeroMCTS(MuZeroBase):
                     break
                 node = next_node
 
-        search_action = tf.argmax(root.q)
-        search_value = tf.constant(root.q[search_action])
+        count = tf.expand_dims(root.visit_count, 0)
+        powed_count = tf.math.pow(tf.cast(count, tf.float32), 1.0 / tau)
+        search_policy = powed_count / tf.reduce_sum(powed_count)
+        search_action = tf.random.categorical(
+            tf.math.log(search_policy), 1)[0][0]
+        search_value = tf.constant(root.q[search_action.numpy()])
         return search_action, search_value
 
 
@@ -118,7 +123,7 @@ class MuZeroPSO(MuZeroBase):
     def __init__(self, representation, dynamics, prediction):
         super().__init__(representation, dynamics, prediction)
 
-    @tf.function
+    @ tf.function
     def plan(
         self,
         obs,
