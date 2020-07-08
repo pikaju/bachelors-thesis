@@ -9,12 +9,14 @@ from replay_buffer import PrioritizedReplayBuffer
 from muzero import MuZeroPSO
 
 import random
+import time
 
 from multiprocessing.pool import ThreadPool
 from multiprocessing import Pool
 
 
 def run_env(env_name,
+            num_environments=8,
             reward_factor=1.0,
             num_particles=32,
             search_depth=4,
@@ -47,116 +49,128 @@ def run_env(env_name,
         )
     )
 
-    env = gym.make(env_name)
+    env_spec = gym.make(env_name)
     replay_buffer = PrioritizedReplayBuffer(replay_buffer_size)
     representation, dynamics, prediction, action_sampler, variables = define_model(
-        env)
+        env_spec)
 
     loss_r, loss_v, loss_p, regularization = define_losses(
-        env,
+        env_spec,
         variables,
         reward_lr,
         value_lr,
         policy_lr,
         regularization_lr,
     )
+    optimizer = tf.optimizers.Adam(learning_rate)
 
     muzero = MuZeroPSO(representation, dynamics, prediction)
 
-    optimizer = tf.optimizers.Adam(learning_rate)
+    def environment_loop(master):
+        episode = 0
+        env = gym.make(env_name)
+        while max_episodes is None or episode < max_episodes:
+            obs_t = env.reset()
+            total_reward = 0
+            replay_candidate = []
+            while True:
+                if render:
+                    if master:
+                        env.render()
+                    else:
+                        time.sleep(0.02)
 
-    episode = 0
-    while max_episodes is None or episode < max_episodes:
-        obs_t = env.reset()
-        total_reward = 0
-        replay_candidate = []
-        while True:
-            if render:
-                env.render()
+                action, value = [x.numpy() for x in muzero.plan(
+                    obs=obs_t,
+                    action_sampler=action_sampler,
+                    discount_factor=tf.constant(discount_factor, tf.float32),
+                    num_particles=tf.constant(num_particles, tf.int32),
+                    depth=search_depth
+                )]
+                if random.uniform(0, 1) < epsilon:
+                    action = env.action_space.sample()
 
-            action, value = [x.numpy() for x in muzero.plan(
-                obs=obs_t,
-                action_sampler=action_sampler,
-                discount_factor=tf.constant(discount_factor, tf.float32),
-                num_particles=tf.constant(num_particles, tf.int32),
-                depth=search_depth
-            )]
-            print(value)
-            if random.uniform(0, 1) < epsilon:
-                action = env.action_space.sample()
+                obs_tp1, reward, done, _ = env.step(action)
+                total_reward += reward
+                reward *= reward_factor
 
-            obs_tp1, reward, done, _ = env.step(action)
-            total_reward += reward
-            reward *= reward_factor
+                replay_candidate.append(
+                    (128.0, (obs_t, value, action, reward, obs_tp1, done)))
+                if len(replay_candidate) > search_depth:
+                    replay_buffer.add(replay_candidate[0][0], [
+                        m[1] for m in replay_candidate])
+                    replay_candidate.pop(0)
 
-            replay_candidate.append(
-                (128.0, (obs_t, value, action, reward, obs_tp1, done)))
-            if len(replay_candidate) > search_depth:
-                replay_buffer.add(replay_candidate[0][0], [
-                                  m[1] for m in replay_candidate])
-                replay_candidate.pop(0)
+                if done:
+                    break
+                obs_t = obs_tp1
 
-            if done:
-                break
-            obs_t = obs_tp1
+            if master:
+                with writer.as_default():
+                    tf.summary.scalar(
+                        'total_reward', total_reward, step=episode)
+                # Training phase
+                for _ in range(training_iterations):
+                    batch = replay_buffer.sample(batch_size, search_depth + 1)
 
-        with writer.as_default():
-            tf.summary.scalar('total_reward', total_reward, step=episode)
+                    obs, values, actions, rewards, obs_tp1, dones = zip(
+                        *[zip(*entry[-1]) for entry in batch])
+                    obs = [tf.constant(x, tf.float32) for x in zip(*obs)]
+                    values = [tf.constant(x, tf.float32) for x in zip(*values)]
+                    actions = [tf.constant(x) for x in zip(*actions)]
+                    rewards = [tf.constant(x, tf.float32)
+                               for x in zip(*rewards)]
+                    obs_tp1 = [tf.constant(x, tf.float32)
+                               for x in zip(*obs_tp1)]
+                    dones = [tf.constant(x, tf.bool) for x in zip(*dones)]
 
-        # Training phase
-        for _ in range(training_iterations):
-            batch = replay_buffer.sample(batch_size, search_depth + 1)
+                    importance_weights = tf.constant(
+                        [e[2] for e in batch], tf.float32)
 
-            obs, values, actions, rewards, obs_tp1, dones = zip(
-                *[zip(*entry[-1]) for entry in batch])
-            obs = [tf.constant(x, tf.float32) for x in zip(*obs)]
-            values = [tf.constant(x, tf.float32) for x in zip(*values)]
-            actions = [tf.constant(x) for x in zip(*actions)]
-            rewards = [tf.constant(x, tf.float32) for x in zip(*rewards)]
-            obs_tp1 = [tf.constant(x, tf.float32) for x in zip(*obs_tp1)]
-            dones = [tf.constant(x, tf.bool) for x in zip(*dones)]
+                    with tf.GradientTape() as tape:
+                        losses, priorities = muzero.loss(
+                            obs,
+                            values,
+                            actions,
+                            rewards,
+                            obs_tp1,
+                            dones,
+                            tf.constant(discount_factor, tf.float32),
+                            loss_r,
+                            loss_v,
+                            loss_p,
+                            regularization,
+                        )
+                        weighted_losses = [
+                            tf.reduce_sum(loss * importance_weights) for loss in losses
+                        ]
+                        total_loss = tf.reduce_sum(weighted_losses)
 
-            importance_weights = tf.constant([e[2] for e in batch], tf.float32)
+                    # Update replay buffer priorities
+                    for element, priority in zip(batch, priorities.numpy()):
+                        replay_buffer.update(element[0], priority)
 
-            with tf.GradientTape() as tape:
-                losses, priorities = muzero.loss(
-                    obs,
-                    values,
-                    actions,
-                    rewards,
-                    obs_tp1,
-                    dones,
-                    tf.constant(discount_factor, tf.float32),
-                    loss_r,
-                    loss_v,
-                    loss_p,
-                    regularization,
-                )
-                weighted_losses = [
-                    tf.reduce_sum(loss * importance_weights) for loss in losses
-                ]
-                total_loss = tf.reduce_sum(weighted_losses)
+                    gradients = tape.gradient(total_loss, variables)
+                    optimizer.apply_gradients(zip(gradients, variables))
 
-            # Update replay buffer priorities
-            for element, priority in zip(batch, priorities.numpy()):
-                replay_buffer.update(element[0], priority)
+                    with writer.as_default():
+                        tf.summary.scalar('loss', total_loss, step=episode)
+                        tf.summary.scalar(
+                            'loss_r', weighted_losses[0], step=episode)
+                        tf.summary.scalar(
+                            'loss_v', weighted_losses[1], step=episode)
+                        tf.summary.scalar(
+                            'loss_p', weighted_losses[2], step=episode)
+                        tf.summary.scalar(
+                            'loss_reg', weighted_losses[3], step=episode)
+            episode += 1
 
-            gradients = tape.gradient(total_loss, variables)
-            optimizer.apply_gradients(zip(gradients, variables))
-
-            with writer.as_default():
-                tf.summary.scalar('loss', total_loss, step=episode)
-                tf.summary.scalar('loss_r', weighted_losses[0], step=episode)
-                tf.summary.scalar('loss_v', weighted_losses[1], step=episode)
-                tf.summary.scalar('loss_p', weighted_losses[2], step=episode)
-                tf.summary.scalar('loss_reg', weighted_losses[3], step=episode)
-
-        episode += 1
+    pool = ThreadPool(num_environments)
+    pool.map(environment_loop, [
+             True, *[False for _ in range(num_environments - 1)]])
 
 
 def benchmark():
-    import time
-
     pool = Pool(5)
     tasks = []
     while True:
@@ -192,16 +206,17 @@ def benchmark():
 
 def test():
     run_env(
-        env_name='CartPole-v1',
-        reward_factor=1.1,
+        env_name='Pendulum-v0',
+        num_environments=10,
+        reward_factor=0.1,
         num_particles=32,
         search_depth=4,
-        learning_rate=0.005,
+        learning_rate=0.01,
         reward_lr=1.0,
         value_lr=1.0,
         epsilon=0.05,
         training_iterations=32,
-        replay_buffer_size=1024,
+        replay_buffer_size=4096,
         discount_factor=0.95,
         batch_size=256,
         max_episodes=None,

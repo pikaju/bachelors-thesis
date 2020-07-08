@@ -3,7 +3,7 @@ import gym
 
 
 state_shape = 16
-activation = tf.nn.relu
+activation = tf.nn.sigmoid
 
 
 @tf.function
@@ -22,7 +22,6 @@ def define_representation(env):
         ),
         tf.keras.layers.Dense(
             state_shape,
-            activation=activation,
             kernel_initializer='he_normal',
         ),
     ], name='representation')
@@ -110,6 +109,11 @@ def define_prediction(env):
         )
     ])
     prediction_value_head = tf.keras.Sequential([
+        tf.keras.layers.Dense(
+            state_shape,
+            activation=activation,
+            kernel_initializer='he_normal',
+        ),
         tf.keras.layers.Dense(
             1,
             kernel_initializer='he_normal',
