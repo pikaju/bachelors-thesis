@@ -103,7 +103,7 @@ class Model:
             *self.prediction_value_path.trainable_variables,
         ]
 
-    @ tf.function
+    @tf.function
     def representation(self, observation):
         raw_state = self.representation_path(observation)
         return self._scale_state(raw_state)
@@ -111,19 +111,20 @@ class Model:
     @tf.function
     def dynamics(self, state, action):
         state_action = tf.concat((state, self._action_to_repr(action)), -1)
-        reward = tf.reshape(self.dynamics_reward_path(state_action), [-1])
+        reward = self.dynamics_reward_path(state_action)[:, 0]
         state = self.dynamics_state_path(state_action)
         return (reward, self._scale_state(state))
 
     @tf.function
     def prediction(self, state):
-        return (self.prediction_policy_path(state),
-                tf.reshape(self.prediction_value_path(state), [-1]))
+        policy = self.prediction_policy_path(state)
+        value = self.prediction_value_path(state)[:, 0]
+        return (policy, value)
 
     @tf.function
     def action_sampler(self, policy):
         if isinstance(self.action_space, gym.spaces.Discrete):
-            return tf.reshape(tf.random.categorical(policy, num_samples=1), [-1])
+            return tf.random.categorical(policy, num_samples=1)[:, 0]
         else:
             return tf.map_fn(lambda x: tf.random.normal([1], mean=x), policy)
 
