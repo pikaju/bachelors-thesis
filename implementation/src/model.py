@@ -1,191 +1,157 @@
 import tensorflow as tf
 import gym
 
-
-state_shape = 16
-activation = tf.nn.sigmoid
+from config import ModelConfig
 
 
-@tf.function
-def scale_state(state):
-    return (state - tf.reduce_min(state, -1, True)) / (tf.reduce_max(state, -1, True) - tf.reduce_min(state, -1, True) * 2.0 - 1.0)
+class Model:
+    def __init__(
+        self,
+        config: ModelConfig,
+        observation_space: gym.spaces.Space,
+        action_space: gym.spaces.Space
+    ):
+        self.observation_space = observation_space
+        self.action_space = action_space
+        action_size = action_space.shape[0] if isinstance(
+            action_space, gym.spaces.Box) else action_space.n
 
+        assert isinstance(observation_space, gym.spaces.Box)
 
-def define_representation(env):
-    obs_shape = env.observation_space.shape
-    representation_path = tf.keras.Sequential([
-        tf.keras.layers.Dense(
-            16,
-            activation=activation,
-            input_shape=obs_shape,
-            kernel_initializer='he_normal',
-        ),
-        tf.keras.layers.Dense(
-            state_shape,
-            kernel_initializer='he_normal',
-        ),
-    ], name='representation')
+        self.representation_path = tf.keras.Sequential([
+            tf.keras.layers.Dense(
+                16,
+                activation=config.activation,
+                input_shape=observation_space.shape,
+                kernel_initializer='he_normal',
+            ),
+            tf.keras.layers.Dense(
+                config.state_size,
+                kernel_initializer='he_normal',
+            ),
+        ], name='representation')
 
-    def no_inf(x):
-        return 1.0 if x > 10.0**20 else (-1.0 if x < -10.0**20 else x)
-    high = env.observation_space.high
-    low = env.observation_space.low
-    high = tf.expand_dims(tf.cast([no_inf(x) for x in high], tf.float32), 0)
-    low = tf.expand_dims(tf.cast([no_inf(x) for x in low], tf.float32), 0)
+        dynamics_trunk = tf.keras.Sequential([
+            tf.keras.layers.Dense(
+                config.state_size,
+                activation=config.activation,
+                input_shape=[config.state_size + action_size],
+                kernel_initializer='he_normal',
+            ),
+        ])
+        dynamics_reward_head = tf.keras.Sequential([
+            tf.keras.layers.Dense(
+                1,
+                kernel_initializer='he_normal',
+            ),
+        ])
+        dynamics_state_head = tf.keras.Sequential([
+            tf.keras.layers.Dense(
+                config.state_size,
+                kernel_initializer='he_normal',
+            ),
+        ])
+        self.dynamics_reward_path = tf.keras.Sequential(
+            [dynamics_trunk, dynamics_reward_head], name='dynamics_reward')
+        self.dynamics_state_path = tf.keras.Sequential(
+            [dynamics_trunk, dynamics_state_head], name='dynamics_state')
 
-    @tf.function
-    def representation(obs):
-        if isinstance(env.observation_space, gym.spaces.Box):
-            return scale_state(representation_path((tf.cast(obs, tf.float32) - low) / (high - low) * 2.0 - 1.0))
-
-    return representation, representation_path.trainable_variables
-
-
-def define_dynamics(env):
-    if isinstance(env.action_space, gym.spaces.Box):
-        action_shape = env.action_space.shape[0]
-    else:
-        action_shape = env.action_space.n
-
-    dynamics_trunk = tf.keras.Sequential([
-        tf.keras.layers.Dense(
-            state_shape,
-            activation=activation,
-            input_shape=(state_shape + action_shape,),
-            kernel_initializer='he_normal',
-        ),
-    ])
-    dynamics_reward_head = tf.keras.Sequential([
-        tf.keras.layers.Dense(
-            1,
-            kernel_initializer='he_normal',
-        ),
-    ])
-    dynamics_state_head = tf.keras.Sequential([
-        tf.keras.layers.Dense(
-            state_shape,
-            kernel_initializer='he_normal',
-        ),
-    ])
-    dynamics_reward_path = tf.keras.Sequential(
-        [dynamics_trunk, dynamics_reward_head],
-        name='dynamics_reward'
-    )
-    dynamics_state_path = tf.keras.Sequential(
-        [dynamics_trunk, dynamics_state_head],
-        name='dynamics_state'
-    )
-
-    @tf.function
-    def dynamics(state, action):
-        if isinstance(env.action_space, gym.spaces.Discrete):
-            action = tf.one_hot(action, action_shape, axis=-1)
-        state_action = tf.concat((state, action), axis=1)
-        reward = tf.reshape(dynamics_reward_path(state_action), [-1])
-        state = dynamics_state_path(state_action)
-        return (reward, scale_state(state))
-
-    return dynamics, [*dynamics_reward_path.trainable_variables, *dynamics_state_path.trainable_variables]
-
-
-def define_prediction(env):
-    if isinstance(env.action_space, gym.spaces.Box):
-        action_shape = env.action_space.shape[0]
-    else:
-        action_shape = env.action_space.n
-
-    prediction_trunk = tf.keras.Sequential([
-        tf.keras.layers.Dense(
-            state_shape,
-            activation=activation,
-            input_shape=(state_shape,),
-            kernel_initializer='he_normal',
-        ),
-    ])
-    prediction_policy_head = tf.keras.Sequential([
-        tf.keras.layers.Dense(
-            action_shape,
-            kernel_initializer='he_normal',
-        )
-    ])
-    prediction_value_head = tf.keras.Sequential([
-        tf.keras.layers.Dense(
-            1,
-            kernel_initializer='he_normal',
-        )
-    ])
-    prediction_policy_path = tf.keras.Sequential(
-        [prediction_trunk, prediction_policy_head],
-        name='prediction_policy'
-    )
-    prediction_value_path = tf.keras.Sequential(
-        [prediction_trunk, prediction_value_head],
-        name='prediction_value'
-    )
+        prediction_trunk = tf.keras.Sequential([
+            tf.keras.layers.Dense(
+                config.state_size,
+                activation=config.activation,
+                input_shape=[config.state_size],
+                kernel_initializer='he_normal',
+            ),
+        ])
+        prediction_policy_head = tf.keras.Sequential([
+            tf.keras.layers.Dense(
+                action_size,
+                kernel_initializer='he_normal',
+            )
+        ])
+        prediction_value_head = tf.keras.Sequential([
+            tf.keras.layers.Dense(
+                1,
+                kernel_initializer='he_normal',
+            )
+        ])
+        self.prediction_policy_path = tf.keras.Sequential(
+            [prediction_trunk, prediction_policy_head], name='prediction_policy')
+        self.prediction_value_path = tf.keras.Sequential(
+            [prediction_trunk, prediction_value_head], name='prediction_value')
 
     @tf.function
-    def prediction(state):
-        return (prediction_policy_path(state), tf.reshape(prediction_value_path(state), [-1]))
-        # return (prediction_policy_path(state) * 0.0, tf.reshape(prediction_value_path(state), [-1]))
+    def _scale_state(self, state):
+        state_min = tf.reduce_min(state, -1, True)
+        state_max = tf.reduce_max(state, -1, True)
+        return (state - state_min) / (state_max - state_min)
 
     @tf.function
-    def action_sampler(policy):
-        if isinstance(env.action_space, gym.spaces.Discrete):
+    def _action_to_repr(self, action):
+        if isinstance(self.action_space, gym.spaces.Discrete):
+            action = tf.one_hot(action, self.action_space.n, 1.0, 0.0, axis=-1)
+        return action
+
+    @property
+    def trainable_variables(self):
+        return [
+            *self.representation_path.trainable_variables,
+            *self.dynamics_reward_path.trainable_variables,
+            *self.dynamics_state_path.trainable_variables,
+            *self.prediction_policy_path.trainable_variables,
+            *self.prediction_value_path.trainable_variables,
+        ]
+
+    @ tf.function
+    def representation(self, observation):
+        raw_state = self.representation_path(observation)
+        return self._scale_state(raw_state)
+
+    @tf.function
+    def dynamics(self, state, action):
+        state_action = tf.concat((state, self._action_to_repr(action)), -1)
+        reward = tf.reshape(self.dynamics_reward_path(state_action), [-1])
+        state = self.dynamics_state_path(state_action)
+        return (reward, self._scale_state(state))
+
+    @tf.function
+    def prediction(self, state):
+        return (self.prediction_policy_path(state),
+                tf.reshape(self.prediction_value_path(state), [-1]))
+
+    @tf.function
+    def action_sampler(self, policy):
+        if isinstance(self.action_space, gym.spaces.Discrete):
             return tf.reshape(tf.random.categorical(policy, num_samples=1), [-1])
-            # return tf.reshape(tf.random.categorical(policy * 0.0, num_samples=1), [-1])
         else:
             return tf.map_fn(lambda x: tf.random.normal([1], mean=x), policy)
-            # return tf.random.normal([32, action_shape])
 
     @tf.function
-    def policy_to_probabilities(policy):
-        assert isinstance(env.action_space, gym.spaces.Discrete)
+    def policy_to_probabilities(self, policy):
+        assert isinstance(self.action_space, gym.spaces.Discrete)
         return tf.nn.softmax(policy)
 
-    return (prediction,
-            action_sampler,
-            policy_to_probabilities,
-            [*prediction_policy_path.trainable_variables,
-             *prediction_value_path.trainable_variables])
-
-
-def define_model(env):
-    representation, representation_variables = define_representation(env)
-    dynamics, dynamics_variables = define_dynamics(env)
-    prediction, action_sampler, policy_to_probabilities, prediction_variables = define_prediction(
-        env)
-
-    variables = [
-        *representation_variables,
-        *dynamics_variables,
-        *prediction_variables,
-    ]
-
-    return representation, dynamics, prediction, action_sampler, policy_to_probabilities, variables
-
-
-def define_losses(env, variables, reward_lr, value_lr, policy_lr, regularization_lr):
     @tf.function
-    def loss_r(true, pred):
+    def loss_reward(self, true, pred):
         true = tf.expand_dims(true, 1)
         pred = tf.expand_dims(pred, 1)
-        return tf.losses.MSE(true, pred) * reward_lr
+        return tf.losses.MSE(true, pred)
 
     @tf.function
-    def loss_v(true, pred):
+    def loss_value(self, true, pred):
         true = tf.expand_dims(true, 1)
         pred = tf.expand_dims(pred, 1)
-        return tf.losses.MSE(true, pred) * value_lr
+        return tf.losses.MSE(true, pred)
 
     @tf.function
-    def loss_p(action, policy):
-        if isinstance(env.action_space, gym.spaces.Discrete):
-            return tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(action, policy)) * policy_lr
+    def loss_policy(self, true, pred):
+        if isinstance(self.action_space, gym.spaces.Discrete):
+            return tf.losses.sparse_categorical_crossentropy(true, pred, from_logits=True)
         else:
-            return tf.losses.MSE(action, policy) * policy_lr
+            return tf.losses.MSE(true, pred)
 
     @tf.function
-    def regularization():
-        return tf.add_n([tf.nn.l2_loss(variable) for variable in variables]) * regularization_lr
-
-    return loss_r, loss_v, loss_p, regularization
+    def loss_regularization(self):
+        variables = self.trainable_variables
+        return tf.add_n([tf.nn.l2_loss(variable) for variable in variables])
