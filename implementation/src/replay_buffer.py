@@ -4,7 +4,7 @@ from sum_tree import SumTree
 
 
 class PrioritizedReplayBuffer:
-    def __init__(self, size, alpha=0.7, beta=0.7):
+    def __init__(self, size, alpha=1.0, beta=1.0):
         self._tree = SumTree(size)
         self.alpha = alpha
         self.beta = beta
