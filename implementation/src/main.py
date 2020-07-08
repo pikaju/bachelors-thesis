@@ -6,7 +6,7 @@ from gym import envs
 
 from model import define_model, define_losses
 from replay_buffer import PrioritizedReplayBuffer
-from muzero import MuZeroPSO
+from muzero import MuZeroMCTS, MuZeroPSO
 
 import random
 import time
@@ -51,8 +51,12 @@ def run_env(env_name,
 
     env_spec = gym.make(env_name)
     replay_buffer = PrioritizedReplayBuffer(replay_buffer_size)
-    representation, dynamics, prediction, action_sampler, variables = define_model(
-        env_spec)
+    (representation,
+     dynamics,
+     prediction,
+     action_sampler,
+     policy_to_probabilities,
+     variables) = define_model(env_spec)
 
     loss_r, loss_v, loss_p, regularization = define_losses(
         env_spec,
@@ -64,7 +68,7 @@ def run_env(env_name,
     )
     optimizer = tf.optimizers.Adam(learning_rate)
 
-    muzero = MuZeroPSO(representation, dynamics, prediction)
+    muzero = MuZeroMCTS(representation, dynamics, prediction)
 
     episode = 0
     env = gym.make(env_name)
@@ -78,10 +82,12 @@ def run_env(env_name,
 
             action, value = [x.numpy() for x in muzero.plan(
                 obs=obs_t,
-                action_sampler=action_sampler,
+                num_actions=env_spec.action_space.n,
+                policy_to_probabilities=policy_to_probabilities,
+                # action_sampler=action_sampler,
                 discount_factor=tf.constant(discount_factor, tf.float32),
-                num_particles=tf.constant(num_particles, tf.int32),
-                depth=search_depth
+                # num_particles=tf.constant(num_particles, tf.int32),
+                # depth=search_depth
             )]
             if random.uniform(0, 1) < epsilon:
                 action = env.action_space.sample()
@@ -102,8 +108,7 @@ def run_env(env_name,
             obs_t = obs_tp1
 
         with writer.as_default():
-            tf.summary.scalar(
-                'total_reward', total_reward, step=episode)
+            tf.summary.scalar('total_reward', total_reward, step=episode)
         # Training phase
         for _ in range(training_iterations):
             batch = replay_buffer.sample(batch_size, train_depth)
@@ -113,10 +118,8 @@ def run_env(env_name,
             obs = [tf.constant(x, tf.float32) for x in zip(*obs)]
             values = [tf.constant(x, tf.float32) for x in zip(*values)]
             actions = [tf.constant(x) for x in zip(*actions)]
-            rewards = [tf.constant(x, tf.float32)
-                       for x in zip(*rewards)]
-            obs_tp1 = [tf.constant(x, tf.float32)
-                       for x in zip(*obs_tp1)]
+            rewards = [tf.constant(x, tf.float32) for x in zip(*rewards)]
+            obs_tp1 = [tf.constant(x, tf.float32) for x in zip(*obs_tp1)]
             dones = [tf.constant(x, tf.bool) for x in zip(*dones)]
 
             importance_weights = tf.constant(
@@ -197,17 +200,17 @@ def benchmark():
 
 def test():
     run_env(
-        env_name='Pendulum-v0',
-        reward_factor=0.1,
+        env_name='CartPole-v1',
+        reward_factor=1.0,
         num_particles=32,
         search_depth=8,
         train_depth=4,
         learning_rate=0.005,
         reward_lr=1.0,
         value_lr=1.0,
-        epsilon=0.05,
+        epsilon=0.1,
         training_iterations=32,
-        replay_buffer_size=4096,
+        replay_buffer_size=1024,
         discount_factor=0.95,
         batch_size=128,
         max_episodes=None,
