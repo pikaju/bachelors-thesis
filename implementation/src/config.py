@@ -1,3 +1,6 @@
+import tensorflow as tf
+
+
 class TrainingConfig:
     def __init__(
         self,
@@ -19,6 +22,15 @@ class ReplayBufferConfig:
         size=1024,
         alpha=1.0,
         beta=1.0,
+    ):
+        self.__dict__.update(locals())
+
+
+class ModelConfig:
+    def __init__(
+        self,
+        activation=tf.nn.relu,
+        state_size=16,
     ):
         self.__dict__.update(locals())
 
@@ -46,6 +58,7 @@ class Config:
         render=True,
         training=TrainingConfig(),
         replay_buffer=ReplayBufferConfig(),
+        model=ModelConfig(),
         muzero=MuZeroConfig(),
     ):
         self.__dict__.update(locals())

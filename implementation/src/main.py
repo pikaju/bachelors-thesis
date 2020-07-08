@@ -5,8 +5,8 @@ import gym
 from gym import envs
 
 from config import *
-from model import define_model, define_losses
 from replay_buffer import PrioritizedReplayBuffer
+from model import Model
 from muzero import MuZeroMCTS, MuZeroPSO
 
 import random
@@ -17,28 +17,14 @@ from multiprocessing import Pool
 
 
 def run_env(config: Config):
-    env_spec = gym.make(config.environment_name)
-    replay_buffer = PrioritizedReplayBuffer(config.replay_buffer)
-    (representation,
-     dynamics,
-     prediction,
-     action_sampler,
-     policy_to_probabilities,
-     variables) = define_model(env_spec)
+    env = gym.make(config.environment_name)
 
-    loss_r, loss_v, loss_p, regularization = define_losses(
-        env_spec,
-        variables,
-        config.training.reward_learning_rate,
-        config.training.value_learning_rate,
-        config.training.policy_learning_rate,
-        config.training.regularization_learning_rate,
-    )
+    replay_buffer = PrioritizedReplayBuffer(config.replay_buffer)
+    model = Model(config.model, env.observation_space, env.action_space)
+    muzero = MuZeroMCTS(model.representation, model.dynamics, model.prediction)
+
     optimizer = tf.optimizers.Adam(config.training.learning_rate)
 
-    muzero = MuZeroMCTS(representation, dynamics, prediction)
-
-    env = gym.make(config.environment_name)
     while True:
         obs_t = env.reset()
         replay_candidate = []
@@ -48,8 +34,8 @@ def run_env(config: Config):
 
             action, value = [x.numpy() for x in muzero.plan(
                 obs=obs_t,
-                num_actions=env_spec.action_space.n,
-                policy_to_probabilities=policy_to_probabilities,
+                num_actions=env.action_space.n,
+                policy_to_probabilities=model.policy_to_probabilities,
                 # action_sampler=action_sampler,
                 discount_factor=tf.constant(
                     config.discount_factor, tf.float32),
@@ -95,20 +81,27 @@ def run_env(config: Config):
                     obs_tp1,
                     dones,
                     tf.constant(config.discount_factor, tf.float32),
-                    loss_r,
-                    loss_v,
-                    loss_p,
-                    regularization,
+                    model.loss_reward,
+                    model.loss_value,
+                    model.loss_policy,
+                    model.loss_regularization,
                 )
-                weighted_losses = [
-                    tf.reduce_sum(loss * importance_weights) for loss in losses
+                learning_rates = [
+                    config.training.reward_learning_rate,
+                    config.training.value_learning_rate,
+                    config.training.policy_learning_rate,
+                    config.training.regularization_learning_rate,
                 ]
-                total_loss = tf.reduce_sum(weighted_losses)
+                total_loss = 0.0
+                for loss, lr in zip(losses, learning_rates):
+                    total_loss += tf.reduce_mean(loss *
+                                                 importance_weights * lr)
 
             # Update replay buffer priorities
             for element, priority in zip(batch, priorities.numpy()):
                 replay_buffer.update(element[0], priority)
 
+            variables = model.trainable_variables
             gradients = tape.gradient(total_loss, variables)
             optimizer.apply_gradients(zip(gradients, variables))
 
@@ -122,8 +115,10 @@ def test():
         ),
         replay_buffer=ReplayBufferConfig(
         ),
+        model=ModelConfig(
+        ),
         muzero=MuZeroConfig(
-        )
+        ),
     )
     run_env(config)
 
