@@ -1,21 +1,26 @@
 import numpy as np
 import random
+
+from config import ReplayBufferConfig
 from sum_tree import SumTree
 
 
 class PrioritizedReplayBuffer:
-    def __init__(self, size, alpha=1.0, beta=1.0):
-        self._tree = SumTree(size)
-        self.alpha = alpha
-        self.beta = beta
+    def __init__(self, config: ReplayBufferConfig):
+        self.config = config
+        self._tree = SumTree(config.size)
+        self._current_size = 0
 
     def add(self, priority, transition):
-        self._tree.add(priority ** self.alpha, transition)
+        self._tree.add(priority ** self.config.alpha, transition)
+        self._current_size += 1
+        if self._current_size > self._tree.capacity:
+            self._current_size = self._tree.capacity
 
     def update(self, index, priority):
-        self._tree.update(index, priority ** self.alpha)
+        self._tree.update(index, priority ** self.config.alpha)
 
-    def sample(self, batch_size, rollout_size):
+    def sample(self, batch_size):
         batch = []
 
         while len(batch) < batch_size:
@@ -25,7 +30,10 @@ class PrioritizedReplayBuffer:
                 print('Replay sampling failed, skipping.')
                 continue
             weight = ((1.0 / batch_size) *
-                      (1.0 / probability)) ** self.beta
+                      (1.0 / probability)) ** self.config.beta
             batch.append((index, probability, weight, data))
 
         return batch
+
+    def __len__(self):
+        return self._current_size
