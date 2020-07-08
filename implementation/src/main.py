@@ -60,12 +60,12 @@ def run_env(config: Config):
 
             obs, values, actions, rewards, obs_tp1, dones = zip(
                 *[zip(*entry[-1]) for entry in batch])
-            obs = [tf.constant(x, tf.float32) for x in zip(*obs)]
-            values = [tf.constant(x, tf.float32) for x in zip(*values)]
-            actions = [tf.constant(x) for x in zip(*actions)]
-            rewards = [tf.constant(x, tf.float32) for x in zip(*rewards)]
-            obs_tp1 = [tf.constant(x, tf.float32) for x in zip(*obs_tp1)]
-            dones = [tf.constant(x, tf.bool) for x in zip(*dones)]
+            obs = tf.constant(list(zip(*obs)), tf.float32)
+            values = tf.constant(list(zip(*values)), tf.float32)
+            actions = tf.constant(list(zip(*actions)))
+            rewards = tf.constant(list(zip(*rewards)), tf.float32)
+            obs_tp1 = tf.constant(list(zip(*obs_tp1)), tf.float32)
+            dones = tf.constant(list(zip(*dones)), tf.bool)
 
             importance_weights = tf.constant(
                 [e[2] for e in batch], tf.float32)

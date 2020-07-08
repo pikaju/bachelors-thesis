@@ -35,37 +35,39 @@ class MuZeroBase:
         rewards,
         obs_tp1,
         dones,
-        discount,
+        discount_factor,
         loss_r,
         loss_v,
         loss_p,
         regularization,
     ):
-        rollout_size = len(obs_t)
-        batch_size = obs_t[0].shape[0]
+        unroll_steps = obs_t.shape[0]
+        batch_size = obs_t.shape[1]
 
-        r_losses, v_losses, p_losses, reg_losses = 0.0, 0.0, 0.0, 0.0
+        r_losses, v_losses, p_losses, reg_losses = [
+            tf.zeros([batch_size]) for _ in range(4)]
         state = self.representation(obs_t[0])
 
         bootstrapped_value = (1 - tf.cast(dones[-1], tf.float32)) * values[-1]
 
-        z = []
-        for i in range(rollout_size):
-            z_i = 0
-            for j in range(i, rollout_size):
-                z_i += discount ** (j - i) * rewards[j]
-            z_i += discount ** (rollout_size - i) * bootstrapped_value
-            z.append(z_i)
+        z = tf.zeros([batch_size])
+        for i in tf.range(unroll_steps):
+            # Calculate n-step return z.
+            z = tf.zeros([batch_size])
+            for j in tf.range(i, unroll_steps):
+                z += discount_factor ** tf.cast(j - i, tf.float32) * rewards[j]
+            z += discount_factor ** tf.cast(unroll_steps - i,
+                                            tf.float32) * bootstrapped_value
 
-        for _, action, true_reward, _, z_k in zip(obs_t, actions, rewards, obs_tp1, z):
+            # Get model predictions.
             policy, value = self.prediction(state)
-            reward, state = self.dynamics(scale_gradient(state), action)
+            reward, state = self.dynamics(scale_gradient(state), actions[i])
 
-            r_losses += loss_r(true_reward, reward) / rollout_size
-            v_losses += loss_v(z_k, value) / rollout_size
-            p_losses += loss_p(action, policy) / rollout_size
+            r_losses += loss_r(rewards[i], reward) / unroll_steps
+            v_losses += loss_v(z, value) / unroll_steps
+            p_losses += loss_p(actions[i], policy) / unroll_steps
             reg_losses += tf.repeat(regularization(),
-                                    repeats=[batch_size]) / rollout_size
+                                    repeats=[batch_size]) / unroll_steps
 
         priorities = tf.abs(z[0] - values[0])
         return [r_losses, v_losses, p_losses, reg_losses], priorities
