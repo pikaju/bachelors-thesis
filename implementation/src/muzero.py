@@ -1,4 +1,6 @@
 import tensorflow as tf
+import numpy as np
+import mcts
 
 
 @tf.function
@@ -65,6 +67,51 @@ class MuZeroBase:
 
         priorities = tf.abs(z[0] - values[0])
         return [r_losses, v_losses, p_losses, reg_losses], priorities
+
+
+class MuZeroMCTS(MuZeroBase):
+    def __init__(self, representation, dynamics, prediction):
+        super().__init__(representation, dynamics, prediction)
+
+    def plan(
+        self,
+        obs,
+        num_actions,
+        policy_to_probabilities,
+        discount_factor,
+        simulations=16,
+        c1=1.25,
+        c2=5000
+    ):
+        obs = tf.expand_dims(obs, 0)
+        initial_state = self.representation(obs)
+        policy, _ = self.prediction(initial_state)
+        probabilities = policy_to_probabilities(policy)[0].numpy()
+        root = mcts.Node(initial_state, probabilities, num_actions)
+
+        for _ in range(simulations):
+            node = root
+            while True:
+                # Maximize UCB
+                ucbs = [node.ucb(action, c1, c2)
+                        for action in range(num_actions)]
+                action = np.argmax(ucbs)
+
+                next_node = node.children[action]
+                if next_node is None:
+                    reward, state = self.dynamics(
+                        node.state, tf.expand_dims(action, 0))
+                    policy, value = self.prediction(state)
+                    probabilities = policy_to_probabilities(policy)[0].numpy()
+                    node.expand(action, reward[0].numpy(),
+                                state, probabilities, num_actions)
+                    node.backup(action, value, discount_factor)
+                    break
+                node = next_node
+
+        search_action = tf.argmax(root.q)
+        search_value = tf.constant(root.q[search_action])
+        return search_action, search_value
 
 
 class MuZeroPSO(MuZeroBase):

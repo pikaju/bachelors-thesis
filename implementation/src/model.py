@@ -137,13 +137,23 @@ def define_prediction(env):
             return tf.map_fn(lambda x: tf.random.normal([1], mean=x), policy)
             # return tf.random.normal([32, action_shape])
 
-    return prediction, action_sampler, [*prediction_policy_path.trainable_variables, *prediction_value_path.trainable_variables]
+    @tf.function
+    def policy_to_probabilities(policy):
+        assert isinstance(env.action_space, gym.spaces.Discrete)
+        return tf.nn.softmax(policy)
+
+    return (prediction,
+            action_sampler,
+            policy_to_probabilities,
+            [*prediction_policy_path.trainable_variables,
+             *prediction_value_path.trainable_variables])
 
 
 def define_model(env):
     representation, representation_variables = define_representation(env)
     dynamics, dynamics_variables = define_dynamics(env)
-    prediction, action_sampler, prediction_variables = define_prediction(env)
+    prediction, action_sampler, policy_to_probabilities, prediction_variables = define_prediction(
+        env)
 
     variables = [
         *representation_variables,
@@ -151,7 +161,7 @@ def define_model(env):
         *prediction_variables,
     ]
 
-    return representation, dynamics, prediction, action_sampler, variables
+    return representation, dynamics, prediction, action_sampler, policy_to_probabilities, variables
 
 
 def define_losses(env, variables, reward_lr, value_lr, policy_lr, regularization_lr):
