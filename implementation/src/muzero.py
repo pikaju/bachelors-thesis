@@ -1,6 +1,13 @@
 import tensorflow as tf
 
 
+@tf.function
+def scale_gradient(tensor):
+    """Scales the gradient for the backward pass."""
+    gradient_scale = 0.5
+    return tensor * gradient_scale + tf.stop_gradient(tensor) * (1 - gradient_scale)
+
+
 class MuZeroBase:
     def __init__(self, representation, dynamics, prediction):
         self.representation = representation
@@ -30,14 +37,8 @@ class MuZeroBase:
         loss_p,
         regularization,
     ):
-        @tf.function
-        def scale_gradient(tensor):
-            """Scales the gradient for the backward pass."""
-            gradient_scale = 0.5
-            return tensor * gradient_scale + tf.stop_gradient(tensor) * (1 - gradient_scale)
-
         rollout_size = len(obs_t)
-        batch_size = len(obs_t[0])
+        batch_size = obs_t[0].shape[0]
 
         r_losses, v_losses, p_losses, reg_losses = 0.0, 0.0, 0.0, 0.0
         state = self.representation(obs_t[0])
@@ -45,11 +46,11 @@ class MuZeroBase:
         bootstrapped_value = (1 - tf.cast(dones[-1], tf.float32)) * values[-1]
 
         z = []
-        for i in range(len(rewards)):
+        for i in range(rollout_size):
             z_i = 0
-            for j in range(i, len(rewards)):
+            for j in range(i, rollout_size):
                 z_i += discount ** (j - i) * rewards[j]
-            z_i += discount ** (len(rewards) - i) * bootstrapped_value
+            z_i += discount ** (rollout_size - i) * bootstrapped_value
             z.append(z_i)
 
         for _, action, true_reward, _, z_k in zip(obs_t, actions, rewards, obs_tp1, z):
