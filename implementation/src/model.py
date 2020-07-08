@@ -8,7 +8,7 @@ activation = tf.nn.sigmoid
 
 @tf.function
 def scale_state(state):
-    return (state - tf.reduce_min(state, -1, True)) / (tf.reduce_max(state, -1, True) - tf.reduce_min(state, -1, True))
+    return (state - tf.reduce_min(state, -1, True)) / (tf.reduce_max(state, -1, True) - tf.reduce_min(state, -1, True) * 2.0 - 1.0)
 
 
 def define_representation(env):
@@ -110,11 +110,6 @@ def define_prediction(env):
     ])
     prediction_value_head = tf.keras.Sequential([
         tf.keras.layers.Dense(
-            state_shape,
-            activation=activation,
-            kernel_initializer='he_normal',
-        ),
-        tf.keras.layers.Dense(
             1,
             kernel_initializer='he_normal',
         )
@@ -130,16 +125,17 @@ def define_prediction(env):
 
     @tf.function
     def prediction(state):
-        return (prediction_policy_path(state) * 0.0, tf.reshape(prediction_value_path(state), [-1]))
+        return (prediction_policy_path(state), tf.reshape(prediction_value_path(state), [-1]))
+        # return (prediction_policy_path(state) * 0.0, tf.reshape(prediction_value_path(state), [-1]))
 
     @tf.function
     def action_sampler(policy):
         if isinstance(env.action_space, gym.spaces.Discrete):
-            # return tf.reshape(tf.random.categorical(policy, num_samples=1), [-1])
-            return tf.reshape(tf.random.categorical(policy * 0.0, num_samples=1), [-1])
+            return tf.reshape(tf.random.categorical(policy, num_samples=1), [-1])
+            # return tf.reshape(tf.random.categorical(policy * 0.0, num_samples=1), [-1])
         else:
-            # return tf.map_fn(lambda x: tf.random.normal([1], mean=x), policy)
-            return tf.random.normal([32, action_shape])
+            return tf.map_fn(lambda x: tf.random.normal([1], mean=x), policy)
+            # return tf.random.normal([32, action_shape])
 
     return prediction, action_sampler, [*prediction_policy_path.trainable_variables, *prediction_value_path.trainable_variables]
 

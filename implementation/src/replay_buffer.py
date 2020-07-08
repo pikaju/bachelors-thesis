@@ -18,9 +18,12 @@ class PrioritizedReplayBuffer:
     def sample(self, batch_size, rollout_size):
         batch = []
 
-        for _ in range(batch_size):
+        while len(batch) < batch_size:
             pointer = random.uniform(0, self._tree.total())
             index, probability, data = self._tree.get(pointer)
+            if isinstance(data, int):
+                print('Replay sampling failed, skipping.')
+                continue
             weight = ((1.0 / batch_size) *
                       (1.0 / probability)) ** self.beta
             batch.append((index, probability, weight, data))
