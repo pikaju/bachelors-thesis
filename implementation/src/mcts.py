@@ -6,8 +6,8 @@ class Node:
     def __init__(self, state, policy, num_actions):
         self.parent = None
         self.parent_action = None
-        self.min_q = 0.0
-        self.max_q = 0.0
+        self._min_q = 0.0
+        self._max_q = 0.0
 
         self.state = state
         self.policy = policy
@@ -20,8 +20,7 @@ class Node:
 
     def puct(self, action, c1, c2):
         # Get minimum and maximum Q values in the tree.
-        min_q = self.get_min_q()
-        max_q = self.get_max_q()
+        min_q, max_q = self.min_q, self.max_q
         # Prevent division by zero.
         if min_q == 0.0 and max_q == 0.0:
             max_q = 1.0
@@ -48,21 +47,16 @@ class Node:
             self.parent.backup(self.parent_action, self.reward[action] +
                                discount_factor * value, discount_factor)
 
-    def get_min_q(self):
-        if self.parent is None:
-            return self.min_q
-        else:
-            return self.parent.get_min_q()
+    @property
+    def min_q(self):
+        return self._min_q if self.parent is None else self.parent.min_q
 
-    def get_max_q(self):
-        if self.parent is None:
-            return self.max_q
-        else:
-            return self.parent.get_max_q()
+    @property
+    def max_q(self):
+        return self._max_q if self.parent is None else self.parent.max_q
 
     def _propagate_q(self, q):
-        if self.parent is None:
-            self.min_q = min(self.min_q, q)
-            self.max_q = max(self.max_q, q)
-        else:
+        self._min_q = min(self._min_q, q)
+        self._max_q = max(self._max_q, q)
+        if self.parent is not None:
             self.parent._propagate_q(q)
