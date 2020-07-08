@@ -9,7 +9,7 @@ class TrainingConfig:
         value_learning_rate=1.0,
         policy_learning_rate=1.0,
         regularization_learning_rate=1.0,
-        batch_size=128,
+        batch_size=256,
         iterations=16,
         unroll_steps=5,
     ):

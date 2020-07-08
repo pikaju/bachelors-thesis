@@ -21,7 +21,7 @@ def run_env(config: Config):
 
     replay_buffer = PrioritizedReplayBuffer(config.replay_buffer)
     model = Model(config.model, env.observation_space, env.action_space)
-    muzero = MuZeroMCTS(model.representation, model.dynamics, model.prediction)
+    muzero = MuZeroPSO(model.representation, model.dynamics, model.prediction)
 
     optimizer = tf.optimizers.Adam(config.training.learning_rate)
 
@@ -34,13 +34,16 @@ def run_env(config: Config):
 
             action, value = [x.numpy() for x in muzero.plan(
                 obs=obs_t,
-                num_actions=env.action_space.n,
-                policy_to_probabilities=model.policy_to_probabilities,
-                # action_sampler=action_sampler,
-                discount_factor=config.discount_factor,
+                # num_actions=env.action_space.n,
+                # policy_to_probabilities=model.policy_to_probabilities,
+                action_sampler=model.action_sampler,
+                discount_factor=tf.constant(
+                    config.discount_factor, tf.float32),
                 config=config.muzero
             )]
-
+            print(value)
+            if random.uniform(0, 1) < 0.2:
+                action = env.action_space.sample()
             obs_tp1, reward, done, _ = env.step(action)
 
             replay_candidate.append(
