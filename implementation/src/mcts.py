@@ -18,7 +18,7 @@ class Node:
         self.reward = np.zeros([num_actions])
         self.children = np.array([None for _ in range(num_actions)], object)
 
-    def ucb(self, action, c1, c2):
+    def puct(self, action, c1, c2):
         # Get minimum and maximum Q values in the tree.
         min_q = self.get_min_q()
         max_q = self.get_max_q()

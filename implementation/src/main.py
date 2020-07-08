@@ -37,10 +37,8 @@ def run_env(config: Config):
                 num_actions=env.action_space.n,
                 policy_to_probabilities=model.policy_to_probabilities,
                 # action_sampler=action_sampler,
-                discount_factor=tf.constant(
-                    config.discount_factor, tf.float32),
-                # num_particles=tf.constant(num_particles, tf.int32),
-                # depth=search_depth
+                discount_factor=config.discount_factor,
+                config=config.muzero
             )]
 
             obs_tp1, reward, done, _ = env.step(action)

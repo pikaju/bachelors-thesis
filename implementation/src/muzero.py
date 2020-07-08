@@ -1,5 +1,7 @@
 import tensorflow as tf
 import numpy as np
+
+from config import MuZeroConfig
 import mcts
 
 
@@ -79,10 +81,7 @@ class MuZeroMCTS(MuZeroBase):
         num_actions,
         policy_to_probabilities,
         discount_factor,
-        simulations=16,
-        c1=1.25,
-        c2=5000,
-        tau=0.5,
+        config: MuZeroConfig,
     ):
         obs = tf.expand_dims(obs, 0)
         initial_state = self.representation(obs)
@@ -90,11 +89,11 @@ class MuZeroMCTS(MuZeroBase):
         probabilities = policy_to_probabilities(policy)[0].numpy()
         root = mcts.Node(initial_state, probabilities, num_actions)
 
-        for _ in range(simulations):
+        for _ in range(config.num_simulations):
             node = root
             while True:
-                # Maximize UCB
-                ucbs = [node.ucb(action, c1, c2)
+                # Maximize pUCT
+                ucbs = [node.puct(action, config.puct_c1, config.puct_c2)
                         for action in range(num_actions)]
                 action = np.argmax(ucbs)
 
@@ -111,7 +110,8 @@ class MuZeroMCTS(MuZeroBase):
                 node = next_node
 
         count = tf.expand_dims(root.visit_count, 0)
-        powed_count = tf.math.pow(tf.cast(count, tf.float32), 1.0 / tau)
+        powed_count = tf.math.pow(
+            tf.cast(count, tf.float32), 1.0 / config.temperature)
         search_policy = powed_count / tf.reduce_sum(powed_count)
         search_action = tf.random.categorical(
             tf.math.log(search_policy), 1)[0][0]
@@ -123,22 +123,22 @@ class MuZeroPSO(MuZeroBase):
     def __init__(self, representation, dynamics, prediction):
         super().__init__(representation, dynamics, prediction)
 
-    @ tf.function
+    @tf.function
     def plan(
         self,
         obs,
         action_sampler,
         discount_factor,
-        num_particles,
-        depth,
+        config: MuZeroConfig,
     ):
         obs = tf.expand_dims(obs, 0)
         initial_state = self.representation(obs)
-        state = tf.repeat(initial_state, repeats=[num_particles], axis=0)
+        state = tf.repeat(initial_state, repeats=[
+                          config.num_particles], axis=0)
 
         actions = []
-        total_reward = tf.zeros([num_particles])
-        for i in range(depth):
+        total_reward = tf.zeros([config.num_particles])
+        for i in range(config.particle_depth):
             policy, value = self.prediction(state)
             action = action_sampler(policy)
             actions.append(action)
@@ -147,7 +147,8 @@ class MuZeroPSO(MuZeroBase):
             total_reward += discounted_reward
 
         _, final_value = self.prediction(state)
-        value = final_value * (discount_factor ** depth) + total_reward
+        value = final_value * (discount_factor **
+                               config.particle_depth) + total_reward
 
         best_index = tf.argmax(value)
 
