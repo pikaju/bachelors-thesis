@@ -93,8 +93,7 @@ def run_env(config: Config):
                 ]
                 total_loss = 0.0
                 for loss, lr in zip(losses, learning_rates):
-                    total_loss += tf.reduce_mean(loss *
-                                                 importance_weights * lr)
+                    total_loss += tf.reduce_sum(loss * importance_weights * lr)
 
             # Update replay buffer priorities
             for element, priority in zip(batch, priorities.numpy()):
