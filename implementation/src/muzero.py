@@ -33,7 +33,6 @@ class MuZeroBase:
         values,
         actions,
         rewards,
-        obs_tp1,
         dones,
         discount_factor,
         loss_r,

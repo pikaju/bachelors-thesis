@@ -110,7 +110,7 @@ class Model:
 
     @tf.function
     def dynamics(self, state, action):
-        state_action = tf.concat((state, self._action_to_repr(action)), -1)
+        state_action = tf.concat([state, self._action_to_repr(action)], -1)
         reward = self.dynamics_reward_path(state_action)[:, 0]
         state = self.dynamics_state_path(state_action)
         return (reward, self._scale_state(state))

@@ -47,7 +47,7 @@ def run_env(config: Config):
             obs_tp1, reward, done, _ = env.step(action)
 
             replay_candidate.append(
-                (128.0, (obs_t, value, action, reward, obs_tp1, done)))
+                (128.0, (obs_t, value, action, reward, done)))
             if len(replay_candidate) > config.training.unroll_steps:
                 replay_buffer.add(replay_candidate[0][0], [
                     m[1] for m in replay_candidate])
@@ -61,13 +61,12 @@ def run_env(config: Config):
         for _ in range(config.training.iterations):
             batch = replay_buffer.sample(config.training.batch_size)
 
-            obs, values, actions, rewards, obs_tp1, dones = zip(
+            obs, values, actions, rewards, dones = zip(
                 *[zip(*entry[-1]) for entry in batch])
             obs = tf.constant(list(zip(*obs)), tf.float32)
             values = tf.constant(list(zip(*values)), tf.float32)
             actions = tf.constant(list(zip(*actions)))
             rewards = tf.constant(list(zip(*rewards)), tf.float32)
-            obs_tp1 = tf.constant(list(zip(*obs_tp1)), tf.float32)
             dones = tf.constant(list(zip(*dones)), tf.bool)
 
             importance_weights = tf.constant(
@@ -79,7 +78,6 @@ def run_env(config: Config):
                     values,
                     actions,
                     rewards,
-                    obs_tp1,
                     dones,
                     tf.constant(config.discount_factor, tf.float32),
                     model.loss_reward,
