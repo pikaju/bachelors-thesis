@@ -30,11 +30,11 @@ def run_env(config: Config):
     while True:
         obs_t = env.reset()
         replay_candidate = []
+        step = 0
         total_reward = 0.0
         while True:
             if config.render:
                 env.render()
-
             action, value = [x.numpy() for x in muzero.plan(
                 obs=obs_t,
                 # num_actions=env.action_space.n,
@@ -44,6 +44,8 @@ def run_env(config: Config):
                     config.discount_factor, tf.float32),
                 config=config.muzero
             )]
+            if random.uniform(0, 1) < 0.1:
+                action = env.action_space.sample()
             print(value)
             obs_tp1, reward, done, _ = env.step(action)
             total_reward += reward
@@ -55,12 +57,15 @@ def run_env(config: Config):
                     m[1] for m in replay_candidate])
                 replay_candidate.pop(0)
 
+            step += 1
             if done:
                 break
             obs_t = obs_tp1
 
         with writer.as_default():
-            tf.summary.scalar('total_reward', total_reward, step=episode)
+            tf.summary.scalar('environment_steps', step, step=episode)
+            tf.summary.scalar('reward/total', total_reward, step=episode)
+            tf.summary.scalar('reward/mean', total_reward / step, step=episode)
 
         # Training phase
         for _ in range(config.training.iterations):
@@ -96,9 +101,11 @@ def run_env(config: Config):
                     config.training.policy_learning_rate,
                     config.training.regularization_learning_rate,
                 ]
-                total_loss = 0.0
+                weighted_losses = []
                 for loss, lr in zip(losses, learning_rates):
-                    total_loss += tf.reduce_sum(loss * importance_weights * lr)
+                    weighted_losses.append(tf.reduce_sum(
+                        loss * importance_weights * lr))
+                total_loss = tf.reduce_sum(weighted_losses)
 
             # Update replay buffer priorities
             for element, priority in zip(batch, priorities.numpy()):
@@ -109,7 +116,13 @@ def run_env(config: Config):
             optimizer.apply_gradients(zip(gradients, variables))
 
             with writer.as_default():
-                tf.summary.scalar('loss', total_loss, step=episode)
+                wl = weighted_losses
+                tf.summary.scalar('loss/total', total_loss, step=episode)
+                tf.summary.scalar('loss/reward', wl[0], step=episode)
+                tf.summary.scalar('loss/value', wl[1], step=episode)
+                tf.summary.scalar('loss/policy', wl[2], step=episode)
+                tf.summary.scalar('loss/regularization',
+                                  wl[3], step=episode)
 
         episode += 1
 
