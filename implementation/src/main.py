@@ -46,7 +46,7 @@ def run_env(config: Config):
 
             replay_candidate.append(
                 (128.0, (obs_t, value, action, reward, done)))
-            if len(replay_candidate) > config.training.unroll_steps:
+            if len(replay_candidate) >= config.training.unroll_steps:
                 replay_buffer.add(replay_candidate[0][0], [
                     m[1] for m in replay_candidate])
                 replay_candidate.pop(0)
