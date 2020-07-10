@@ -42,8 +42,6 @@ def run_env(config: Config):
                 config=config.muzero
             )]
             print(value)
-            if random.uniform(0, 1) < 0.2:
-                action = env.action_space.sample()
             obs_tp1, reward, done, _ = env.step(action)
 
             replay_candidate.append(

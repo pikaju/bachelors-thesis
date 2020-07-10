@@ -21,18 +21,17 @@ class PrioritizedReplayBuffer:
         self._tree.update(index, priority ** self.config.alpha)
 
     def sample(self, batch_size):
-        batch = []
+        # If the replay buffer is empty, return an empty batch.
+        if len(self) == 0:
+            return []
 
+        batch = []
         while len(batch) < batch_size:
             pointer = random.uniform(0, self._tree.total())
             index, probability, data = self._tree.get(pointer)
-            if isinstance(data, int):
-                print('Replay sampling failed, skipping.')
-                continue
             weight = ((1.0 / batch_size) *
                       (1.0 / probability)) ** self.config.beta
             batch.append((index, probability, weight, data))
-
         return batch
 
     def __len__(self):
