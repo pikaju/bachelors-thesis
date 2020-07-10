@@ -53,7 +53,8 @@ class MuZeroConfig:
 class Config:
     def __init__(
         self,
-        environment_name="",
+        summary_directory,
+        environment_name,
         discount_factor=1.0,
         render=True,
         training=TrainingConfig(),
