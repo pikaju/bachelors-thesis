@@ -22,7 +22,7 @@ def run_env(config: Config):
 
     replay_buffer = PrioritizedReplayBuffer(config.replay_buffer)
     model = Model(config.model, env.observation_space, env.action_space)
-    muzero = MuZeroMCTS(model.representation, model.dynamics, model.prediction)
+    muzero = MuZeroPSO(model.representation, model.dynamics, model.prediction)
 
     optimizer = tf.optimizers.Adam(config.training.learning_rate)
 
@@ -37,9 +37,9 @@ def run_env(config: Config):
                 env.render()
             action, value = [x.numpy() for x in muzero.plan(
                 obs=obs_t,
-                num_actions=env.action_space.n,
-                policy_to_probabilities=model.policy_to_probabilities,
-                # action_sampler=model.action_sampler,
+                # num_actions=env.action_space.n,
+                # policy_to_probabilities=model.policy_to_probabilities,
+                action_sampler=model.action_sampler,
                 discount_factor=tf.constant(
                     config.discount_factor, tf.float32),
                 config=config.muzero
@@ -48,11 +48,19 @@ def run_env(config: Config):
             obs_tp1, reward, done, _ = env.step(action)
             total_reward += reward
 
-            replay_candidate.append(
-                (128.0, (obs_t, value, action, reward, done)))
-            if len(replay_candidate) >= config.training.unroll_steps:
-                replay_buffer.add(replay_candidate[0][0], [
-                    m[1] for m in replay_candidate])
+            replay_candidate.append((obs_t, reward, value, action, done))
+            while len(replay_candidate) >= config.training.n or (done and len(replay_candidate) >= config.training.unroll_steps):
+                rc = replay_candidate
+                sample = []
+                bv = rc[-1][1] if rc[-1][-1] else rc[-1][2]
+                for i in range(config.training.unroll_steps):
+                    z = 0.0
+                    for j in range(i, len(rc) - 1):
+                        z += config.discount_factor ** (j - i) * rc[j][1]
+                    z += config.discount_factor ** (len(rc) - i) * bv
+                    sample.append((rc[i][0], rc[i][1], z, rc[i][3]))
+                priority = abs(sample[0][2] - replay_candidate[-1][2])
+                replay_buffer.add(priority, sample)
                 replay_candidate.pop(0)
 
             step += 1
@@ -69,25 +77,22 @@ def run_env(config: Config):
         for _ in range(config.training.iterations):
             batch = replay_buffer.sample(config.training.batch_size)
 
-            obs, values, actions, rewards, dones = zip(
+            obses, rewards, zs, actions = zip(
                 *[zip(*entry[-1]) for entry in batch])
-            obs = tf.constant(list(zip(*obs)), tf.float32)
-            values = tf.constant(list(zip(*values)), tf.float32)
-            actions = tf.constant(list(zip(*actions)))
+            obses = tf.constant(list(zip(*obses)), tf.float32)
             rewards = tf.constant(list(zip(*rewards)), tf.float32)
-            dones = tf.constant(list(zip(*dones)), tf.bool)
+            zs = tf.constant(list(zip(*zs)), tf.float32)
+            actions = tf.constant(list(zip(*actions)))
 
             importance_weights = tf.constant(
                 [e[2] for e in batch], tf.float32)
 
             with tf.GradientTape() as tape:
-                losses, priorities = muzero.loss(
-                    obs,
-                    values,
-                    actions,
+                losses = muzero.loss(
+                    obses,
                     rewards,
-                    dones,
-                    tf.constant(config.discount_factor, tf.float32),
+                    zs,
+                    actions,
                     model.loss_reward,
                     model.loss_value,
                     model.loss_policy,
@@ -104,10 +109,6 @@ def run_env(config: Config):
                     weighted_losses.append(tf.reduce_sum(
                         loss * importance_weights * lr))
                 total_loss = tf.reduce_sum(weighted_losses)
-
-            # Update replay buffer priorities
-            for element, priority in zip(batch, priorities.numpy()):
-                replay_buffer.update(element[0], priority)
 
             variables = model.trainable_variables
             gradients = tape.gradient(total_loss, variables)

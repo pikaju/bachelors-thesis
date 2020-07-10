@@ -29,53 +29,34 @@ class MuZeroBase:
     @tf.function
     def loss(
         self,
-        obs_t,
-        values,
-        actions,
+        obses,
         rewards,
-        dones,
-        discount_factor,
+        zs,
+        actions,
         loss_r,
         loss_v,
         loss_p,
         regularization,
     ):
-        unroll_steps = obs_t.shape[0]
-        batch_size = obs_t.shape[1]
+        unroll_steps = obses.shape[0]
+        batch_size = obses.shape[1]
 
         r_losses, v_losses, p_losses, reg_losses = [
             tf.zeros([batch_size]) for _ in range(4)]
-        state = self.representation(obs_t[0])
+        state = self.representation(obses[0])
 
-        bootstrapped_value = (1 - tf.cast(dones[-1], tf.float32)) * values[-1]
-
-        z = tf.zeros([batch_size])
         for i in tf.range(unroll_steps):
-            # Calculate n-step return.
-            z = tf.zeros([batch_size])
-            for j in tf.range(i, unroll_steps):
-                z += discount_factor ** tf.cast(j - i, tf.float32) * rewards[j]
-            z += discount_factor ** tf.cast(unroll_steps - i,
-                                            tf.float32) * bootstrapped_value
-
             # Get model predictions.
             policy, value = self.prediction(state)
             reward, state = self.dynamics(scale_gradient(state), actions[i])
 
             r_losses += loss_r(rewards[i], reward) / unroll_steps
-            v_losses += loss_v(z, value) / unroll_steps
+            v_losses += loss_v(zs[i], value) / unroll_steps
             p_losses += loss_p(actions[i], policy) / unroll_steps
             reg_losses += tf.repeat(regularization(),
                                     repeats=[batch_size]) / unroll_steps
 
-        z = tf.zeros([batch_size])
-        for i in tf.range(unroll_steps):
-            z += discount_factor ** tf.cast(i, tf.float32) * rewards[i]
-        z += discount_factor ** tf.cast(unroll_steps,
-                                        tf.float32) * bootstrapped_value
-
-        priorities = tf.abs(z - values[0])
-        return [r_losses, v_losses, p_losses, reg_losses], priorities
+        return [r_losses, v_losses, p_losses, reg_losses]
 
 
 class MuZeroMCTS(MuZeroBase):
