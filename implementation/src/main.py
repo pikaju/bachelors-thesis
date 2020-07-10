@@ -17,6 +17,7 @@ from multiprocessing import Pool
 
 
 def run_env(config: Config):
+    writer = tf.summary.create_file_writer(config.summary_directory)
     env = gym.make(config.environment_name)
 
     replay_buffer = PrioritizedReplayBuffer(config.replay_buffer)
@@ -25,9 +26,11 @@ def run_env(config: Config):
 
     optimizer = tf.optimizers.Adam(config.training.learning_rate)
 
+    episode = 0
     while True:
         obs_t = env.reset()
         replay_candidate = []
+        total_reward = 0.0
         while True:
             if config.render:
                 env.render()
@@ -43,6 +46,7 @@ def run_env(config: Config):
             )]
             print(value)
             obs_tp1, reward, done, _ = env.step(action)
+            total_reward += reward
 
             replay_candidate.append(
                 (128.0, (obs_t, value, action, reward, done)))
@@ -54,6 +58,9 @@ def run_env(config: Config):
             if done:
                 break
             obs_t = obs_tp1
+
+        with writer.as_default():
+            tf.summary.scalar('total_reward', total_reward, step=episode)
 
         # Training phase
         for _ in range(config.training.iterations):
@@ -101,10 +108,16 @@ def run_env(config: Config):
             gradients = tape.gradient(total_loss, variables)
             optimizer.apply_gradients(zip(gradients, variables))
 
+            with writer.as_default():
+                tf.summary.scalar('loss', total_loss, step=episode)
+
+        episode += 1
+
 
 def test():
     config = Config(
-        environment_name="CartPole-v1",
+        summary_directory='./logs/summary',
+        environment_name='CartPole-v1',
         discount_factor=0.95,
         render=True,
         training=TrainingConfig(
