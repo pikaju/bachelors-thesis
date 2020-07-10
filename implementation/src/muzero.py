@@ -51,7 +51,7 @@ class MuZeroBase:
 
         z = tf.zeros([batch_size])
         for i in tf.range(unroll_steps):
-            # Calculate n-step return z.
+            # Calculate n-step return.
             z = tf.zeros([batch_size])
             for j in tf.range(i, unroll_steps):
                 z += discount_factor ** tf.cast(j - i, tf.float32) * rewards[j]
@@ -68,7 +68,13 @@ class MuZeroBase:
             reg_losses += tf.repeat(regularization(),
                                     repeats=[batch_size]) / unroll_steps
 
-        priorities = tf.abs(z[0] - values[0])
+        z = tf.zeros([batch_size])
+        for i in tf.range(unroll_steps):
+            z += discount_factor ** tf.cast(i, tf.float32) * rewards[i]
+        z += discount_factor ** tf.cast(unroll_steps,
+                                        tf.float32) * bootstrapped_value
+
+        priorities = tf.abs(z - values[0])
         return [r_losses, v_losses, p_losses, reg_losses], priorities
 
 
