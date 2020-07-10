@@ -116,7 +116,8 @@ class MuZeroMCTS(MuZeroBase):
         search_policy = powed_count / tf.reduce_sum(powed_count)
         search_action = tf.random.categorical(
             tf.math.log(search_policy), 1)[0][0]
-        search_value = tf.constant(root.q[search_action.numpy()])
+        search_value = tf.reduce_sum(
+            (root.q * discount_factor + root.reward) * search_policy)
         return search_action, search_value
 
 

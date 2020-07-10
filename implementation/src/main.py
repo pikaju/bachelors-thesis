@@ -22,7 +22,7 @@ def run_env(config: Config):
 
     replay_buffer = PrioritizedReplayBuffer(config.replay_buffer)
     model = Model(config.model, env.observation_space, env.action_space)
-    muzero = MuZeroPSO(model.representation, model.dynamics, model.prediction)
+    muzero = MuZeroMCTS(model.representation, model.dynamics, model.prediction)
 
     optimizer = tf.optimizers.Adam(config.training.learning_rate)
 
@@ -37,15 +37,13 @@ def run_env(config: Config):
                 env.render()
             action, value = [x.numpy() for x in muzero.plan(
                 obs=obs_t,
-                # num_actions=env.action_space.n,
-                # policy_to_probabilities=model.policy_to_probabilities,
-                action_sampler=model.action_sampler,
+                num_actions=env.action_space.n,
+                policy_to_probabilities=model.policy_to_probabilities,
+                # action_sampler=model.action_sampler,
                 discount_factor=tf.constant(
                     config.discount_factor, tf.float32),
                 config=config.muzero
             )]
-            if random.uniform(0, 1) < 0.1:
-                action = env.action_space.sample()
             print(value)
             obs_tp1, reward, done, _ = env.step(action)
             total_reward += reward
@@ -129,7 +127,7 @@ def run_env(config: Config):
 
 def test():
     config = Config(
-        summary_directory='./logs/summary',
+        summary_directory='./logs/mcts',
         environment_name='CartPole-v1',
         discount_factor=0.95,
         render=True,
