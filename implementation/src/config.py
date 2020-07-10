@@ -4,9 +4,9 @@ import tensorflow as tf
 class TrainingConfig:
     def __init__(
         self,
-        learning_rate=0.005,
+        learning_rate=0.001,
         reward_learning_rate=1.0,
-        value_learning_rate=1.0,
+        value_learning_rate=0.2,
         policy_learning_rate=1.0,
         regularization_learning_rate=0.001,
         batch_size=256,
