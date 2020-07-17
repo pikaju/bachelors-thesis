@@ -27,7 +27,7 @@ def run_env(config: Config):
                 z += config.discount_factor ** (j - i) * rc[j][1]
             z += config.discount_factor ** (len(rc) - i) * bv
             sample.append((rc[i][0], rc[i][1], z, rc[i][3]))
-        priority = abs(sample[0][2] - rc[-1][2])
+        priority = abs(rc[0][2] - sample[0][2])
         return priority, sample
 
     writer = tf.summary.create_file_writer(config.summary_directory)
@@ -142,7 +142,6 @@ def test():
         ),
         replay_buffer=ReplayBufferConfig(
             size=2048,
-            alpha=0.0,
         ),
         model=ModelConfig(
         ),
