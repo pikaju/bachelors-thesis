@@ -17,12 +17,25 @@ from multiprocessing import Pool
 
 
 def run_env(config: Config):
+    def replay_candidate_to_sample(replay_candidate):
+        rc = replay_candidate
+        sample = []
+        bv = rc[-1][1] if rc[-1][-1] else rc[-1][2]
+        for i in range(config.training.unroll_steps):
+            z = 0.0
+            for j in range(i, len(rc) - 1):
+                z += config.discount_factor ** (j - i) * rc[j][1]
+            z += config.discount_factor ** (len(rc) - i) * bv
+            sample.append((rc[i][0], rc[i][1], z, rc[i][3]))
+        priority = abs(sample[0][2] - rc[-1][2])
+        return priority, sample
+
     writer = tf.summary.create_file_writer(config.summary_directory)
     env = gym.make(config.environment_name)
 
     replay_buffer = PrioritizedReplayBuffer(config.replay_buffer)
     model = Model(config.model, env.observation_space, env.action_space)
-    muzero = MuZeroPSO(model.representation, model.dynamics, model.prediction)
+    muzero = MuZeroMCTS(model.representation, model.dynamics, model.prediction)
 
     optimizer = tf.optimizers.Adam(config.training.learning_rate)
 
@@ -37,29 +50,22 @@ def run_env(config: Config):
                 env.render()
             action, value = [x.numpy() for x in muzero.plan(
                 obs=obs_t,
-                # num_actions=env.action_space.n,
-                # policy_to_probabilities=model.policy_to_probabilities,
-                action_sampler=model.action_sampler,
+                num_actions=env.action_space.n,
+                policy_to_probabilities=model.policy_to_probabilities,
+                # action_sampler=model.action_sampler,
                 discount_factor=tf.constant(
                     config.discount_factor, tf.float32),
                 config=config.muzero
             )]
             print(value)
+            # if random.uniform(0, 1) < 0.2:
+            #     action = env.action_space.sample()
             obs_tp1, reward, done, _ = env.step(action)
             total_reward += reward
 
             replay_candidate.append((obs_t, reward, value, action, done))
             while len(replay_candidate) >= config.training.n or (done and len(replay_candidate) >= config.training.unroll_steps):
-                rc = replay_candidate
-                sample = []
-                bv = rc[-1][1] if rc[-1][-1] else rc[-1][2]
-                for i in range(config.training.unroll_steps):
-                    z = 0.0
-                    for j in range(i, len(rc) - 1):
-                        z += config.discount_factor ** (j - i) * rc[j][1]
-                    z += config.discount_factor ** (len(rc) - i) * bv
-                    sample.append((rc[i][0], rc[i][1], z, rc[i][3]))
-                priority = abs(sample[0][2] - replay_candidate[-1][2])
+                priority, sample = replay_candidate_to_sample(replay_candidate)
                 replay_buffer.add(priority, sample)
                 replay_candidate.pop(0)
 
@@ -130,11 +136,13 @@ def test():
     config = Config(
         summary_directory='./logs/mcts',
         environment_name='CartPole-v1',
-        discount_factor=0.95,
+        discount_factor=0.97,
         render=True,
         training=TrainingConfig(
         ),
         replay_buffer=ReplayBufferConfig(
+            size=2048,
+            alpha=0.0,
         ),
         model=ModelConfig(
         ),

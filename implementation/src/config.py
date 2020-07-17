@@ -8,7 +8,7 @@ class TrainingConfig:
         unroll_steps=5,
         learning_rate=0.001,
         reward_learning_rate=1.0,
-        value_learning_rate=0.2,
+        value_learning_rate=1.0,
         policy_learning_rate=1.0,
         regularization_learning_rate=0.001,
         batch_size=256,
