@@ -4,6 +4,7 @@ import tensorflow as tf
 class TrainingConfig:
     def __init__(
         self,
+        reward_factor=1.0,
         n=10,
         unroll_steps=5,
         learning_rate=0.001,
