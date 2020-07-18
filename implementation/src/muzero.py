@@ -85,9 +85,7 @@ class MuZeroMCTS(MuZeroBase):
             node = root
             while True:
                 # Maximize pUCT value based on action.
-                ucbs = [node.puct(action, config.puct_c1, config.puct_c2)
-                        for action in range(num_actions)]
-                action = np.argmax(ucbs)
+                action = np.argmax(node.puct(config.puct_c1, config.puct_c2))
 
                 next_node = node.children[action]
                 if next_node is None:

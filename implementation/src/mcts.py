@@ -18,18 +18,18 @@ class Node:
         self.reward = np.zeros([num_actions])
         self.children = [None for _ in range(num_actions)]
 
-    def puct(self, action, c1, c2):
+    def puct(self, c1, c2):
         # Get minimum and maximum Q values in the tree.
         min_q, max_q = self.min_q, self.max_q
         # Prevent division by zero.
         if min_q == 0.0 and max_q == 0.0:
             max_q = 1.0
         # Normalize Q value.
-        normalized_q = (self.q[action] - min_q) / (max_q - min_q)
+        normalized_q = (self.q - min_q) / (max_q - min_q)
         tvc = np.sum(self.visit_count)
-        rvc = math.sqrt(tvc) / (1 + self.visit_count[action])
+        rvc = math.sqrt(tvc) / (1 + self.visit_count)
         il = math.log((tvc + c2 + 1) / c2)
-        return normalized_q + self.policy[action] * rvc * (c1 + il)
+        return normalized_q + self.policy * rvc * (c1 + il)
 
     def expand(self, action, reward, state, policy, num_actions):
         self.reward[action] = reward
