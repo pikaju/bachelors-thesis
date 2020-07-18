@@ -39,7 +39,7 @@ class ModelConfig:
 class MuZeroConfig:
     def __init__(
         self,
-        num_simulations=16,
+        num_simulations=32,
         num_particles=32,
         particle_depth=4,
         dirichlet_alpha=1.0,

@@ -16,7 +16,7 @@ class Node:
         self.visit_count = np.zeros([num_actions], int)
         self.q = np.zeros([num_actions])
         self.reward = np.zeros([num_actions])
-        self.children = np.array([None for _ in range(num_actions)], object)
+        self.children = [None for _ in range(num_actions)]
 
     def puct(self, action, c1, c2):
         # Get minimum and maximum Q values in the tree.
