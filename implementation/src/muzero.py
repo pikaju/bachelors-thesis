@@ -75,6 +75,10 @@ class MuZeroMCTS(MuZeroBase):
         initial_state = self.representation(obs)
         policy, _ = self.prediction(initial_state)
         probabilities = policy_to_probabilities(policy)[0].numpy()
+        dirichlet_noise = np.random.dirichlet(
+            [config.dirichlet_alpha] * probabilities.shape[0])
+        probabilities = config.dirichlet_x * probabilities + \
+            (1.0 - config.dirichlet_x) * dirichlet_noise
         root = mcts.Node(initial_state, probabilities, num_actions)
 
         for _ in range(config.num_simulations):
