@@ -42,10 +42,10 @@ class MuZeroConfig:
         num_simulations=32,
         num_particles=32,
         particle_depth=4,
-        dirichlet_alpha=1.0,
+        dirichlet_alpha=2.0,
         dirichlet_x=0.75,
         puct_c1=1.25,
-        puct_c2=5000,
+        puct_c2=19652,
         temperature=1.0,
     ):
         self.__dict__.update(locals())

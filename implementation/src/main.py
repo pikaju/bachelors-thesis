@@ -62,6 +62,7 @@ def run_env(config: Config):
             #     action = env.action_space.sample()
             obs_tp1, reward, done, _ = env.step(action)
             total_reward += reward
+            reward /= 10.0
 
             replay_candidate.append((obs_t, reward, value, action, done))
             while len(replay_candidate) >= config.training.n or (done and len(replay_candidate) >= config.training.unroll_steps):
@@ -135,14 +136,14 @@ def run_env(config: Config):
 def test():
     config = Config(
         summary_directory='./logs/mcts',
-        environment_name='CartPole-v1',
+        environment_name='LunarLander-v2',
         discount_factor=0.97,
         render=True,
         training=TrainingConfig(
             learning_rate=0.005,
         ),
         replay_buffer=ReplayBufferConfig(
-            size=1024,
+            size=8192,
         ),
         model=ModelConfig(
         ),
