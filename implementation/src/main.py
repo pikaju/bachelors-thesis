@@ -139,9 +139,10 @@ def test():
         discount_factor=0.97,
         render=True,
         training=TrainingConfig(
+            learning_rate=0.005,
         ),
         replay_buffer=ReplayBufferConfig(
-            size=2048,
+            size=1024,
         ),
         model=ModelConfig(
         ),
