@@ -39,7 +39,7 @@ def run_env(config_generator: Callable[[int], Config]):
     model = Model(config.model, env.observation_space, env.action_space)
     muzero = MuZeroMCTS(model.representation, model.dynamics, model.prediction)
 
-    optimizer = tf.optimizers.Adam(config.training.learning_rate)
+    optimizer = tf.optimizers.Adam(lambda: config.training.learning_rate)
 
     episode = 0
     while True:
@@ -139,13 +139,13 @@ def run_env(config_generator: Callable[[int], Config]):
 def test():
     def generate_config(episode: int):
         return Config(
-            summary_directory='./logs/mcts8',
+            summary_directory='./logs/mcts9',
             environment_name='CartPole-v1',
             discount_factor=0.97,
             render=True,
             training=TrainingConfig(
                 reward_factor=0.1,
-                learning_rate=0.002 * 0.98 ** episode,
+                learning_rate=0.002 * 0.99 ** episode,
                 batch_size=512,
                 iterations=32,
             ),
