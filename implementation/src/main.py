@@ -1,3 +1,9 @@
+import random
+import time
+from typing import Callable
+from multiprocessing.pool import ThreadPool
+from multiprocessing import Pool
+
 import tensorflow as tf
 import numpy as np
 import gym
@@ -9,14 +15,10 @@ from replay_buffer import PrioritizedReplayBuffer
 from model import Model
 from muzero import MuZeroMCTS, MuZeroPSO
 
-import random
-import time
 
-from multiprocessing.pool import ThreadPool
-from multiprocessing import Pool
+def run_env(config_generator: Callable[[int], Config]):
+    config = config_generator(0)
 
-
-def run_env(config: Config):
     def replay_candidate_to_sample(replay_candidate):
         rc = replay_candidate
         sample = []
@@ -131,35 +133,34 @@ def run_env(config: Config):
                                   wl[3], step=episode)
 
         episode += 1
+        config = config_generator(episode)
 
 
 def test():
-    config = Config(
-        summary_directory='./logs/mcts1',
-        environment_name='CartPole-v1',
-        discount_factor=0.97,
-        render=True,
-        training=TrainingConfig(
-            reward_factor=0.1,
-            learning_rate=0.01,
-            reward_learning_rate=1.0,
-            policy_learning_rate=1.0,
-            regularization_learning_rate=0.00002,
-            batch_size=512,
-            iterations=32,
-        ),
-        replay_buffer=ReplayBufferConfig(
-            size=2048,
-        ),
-        model=ModelConfig(
-            state_size=16,
-        ),
-        muzero=MuZeroConfig(
-            num_simulations=16,
-            temperature=1.0,
-        ),
-    )
-    run_env(config)
+    def generate_config(episode: int):
+        return Config(
+            summary_directory='./logs/mcts8',
+            environment_name='CartPole-v1',
+            discount_factor=0.97,
+            render=True,
+            training=TrainingConfig(
+                reward_factor=0.1,
+                learning_rate=0.002 * 0.98 ** episode,
+                batch_size=512,
+                iterations=32,
+            ),
+            replay_buffer=ReplayBufferConfig(
+                size=2048,
+            ),
+            model=ModelConfig(
+                state_size=16,
+            ),
+            muzero=MuZeroConfig(
+                num_simulations=16,
+                temperature=1.0 * 0.99 ** episode,
+            ),
+        )
+    run_env(generate_config)
 
 
 def main():
