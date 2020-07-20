@@ -135,21 +135,28 @@ def run_env(config: Config):
 
 def test():
     config = Config(
-        summary_directory='./logs/mcts3',
+        summary_directory='./logs/mcts1',
         environment_name='CartPole-v1',
-        discount_factor=0.95,
+        discount_factor=0.97,
         render=True,
         training=TrainingConfig(
             reward_factor=0.1,
-            learning_rate=0.005,
+            learning_rate=0.01,
+            reward_learning_rate=1.0,
+            policy_learning_rate=1.0,
+            regularization_learning_rate=0.00002,
+            batch_size=512,
+            iterations=32,
         ),
         replay_buffer=ReplayBufferConfig(
             size=2048,
         ),
         model=ModelConfig(
+            state_size=16,
         ),
         muzero=MuZeroConfig(
             num_simulations=16,
+            temperature=1.0,
         ),
     )
     run_env(config)

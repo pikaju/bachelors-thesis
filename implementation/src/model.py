@@ -1,3 +1,5 @@
+import math
+
 import tensorflow as tf
 import gym
 
@@ -20,7 +22,8 @@ class Model:
 
         self.representation_path = tf.keras.Sequential([
             tf.keras.layers.Dense(
-                16,
+                math.ceil(
+                    (observation_space.shape[0] + config.state_size) / 2.0),
                 activation=config.activation,
                 input_shape=observation_space.shape,
                 kernel_initializer='he_normal',
@@ -31,69 +34,70 @@ class Model:
             ),
         ], name='representation')
 
-        dynamics_trunk = tf.keras.Sequential([
+        self.dynamics_reward_path = tf.keras.Sequential([
+            tf.keras.layers.Dense(
+                math.ceil(config.state_size / 2.0),
+                activation=config.activation,
+                input_shape=[config.state_size + action_size],
+                kernel_initializer='he_normal',
+            ),
+            tf.keras.layers.Dense(
+                1,
+                kernel_initializer='he_normal',
+            ),
+        ], name='dynamics_reward')
+        self.dynamics_state_path = tf.keras.Sequential([
             tf.keras.layers.Dense(
                 config.state_size,
                 activation=config.activation,
                 input_shape=[config.state_size + action_size],
                 kernel_initializer='he_normal',
             ),
-        ])
-        dynamics_reward_head = tf.keras.Sequential([
-            tf.keras.layers.Dense(
-                1,
-                kernel_initializer='he_normal',
-            ),
-        ])
-        dynamics_state_head = tf.keras.Sequential([
             tf.keras.layers.Dense(
                 config.state_size,
+                input_shape=[config.state_size + action_size],
                 kernel_initializer='he_normal',
             ),
-        ])
-        self.dynamics_reward_path = tf.keras.Sequential(
-            [dynamics_trunk, dynamics_reward_head], name='dynamics_reward')
-        self.dynamics_state_path = tf.keras.Sequential(
-            [dynamics_trunk, dynamics_state_head], name='dynamics_state')
+        ], name='dynamics_state')
 
-        prediction_trunk = tf.keras.Sequential([
+        self.prediction_policy_path = tf.keras.Sequential([
             tf.keras.layers.Dense(
-                config.state_size,
+                math.ceil((config.state_size + action_size) / 2.0),
                 activation=config.activation,
                 input_shape=[config.state_size],
                 kernel_initializer='he_normal',
             ),
-        ])
-        prediction_policy_head = tf.keras.Sequential([
             tf.keras.layers.Dense(
                 action_size,
                 kernel_initializer='he_normal',
             )
-        ])
-        prediction_value_head = tf.keras.Sequential([
+        ], name='prediction_policy')
+        self.prediction_value_path = tf.keras.Sequential([
+            tf.keras.layers.Dense(
+                math.ceil(config.state_size / 2.0),
+                activation=config.activation,
+                input_shape=[config.state_size],
+                kernel_initializer='he_normal',
+            ),
             tf.keras.layers.Dense(
                 1,
                 kernel_initializer='he_normal',
             )
-        ])
-        self.prediction_policy_path = tf.keras.Sequential(
-            [prediction_trunk, prediction_policy_head], name='prediction_policy')
-        self.prediction_value_path = tf.keras.Sequential(
-            [prediction_trunk, prediction_value_head], name='prediction_value')
+        ], name='prediction_value')
 
-    @tf.function
+    @ tf.function
     def _scale_state(self, state):
         state_min = tf.reduce_min(state, -1, True)
         state_max = tf.reduce_max(state, -1, True)
         return (state - state_min) / (state_max - state_min)
 
-    @tf.function
+    @ tf.function
     def _action_to_repr(self, action):
         if isinstance(self.action_space, gym.spaces.Discrete):
             action = tf.one_hot(action, self.action_space.n, 1.0, 0.0, axis=-1)
         return action
 
-    @property
+    @ property
     def trainable_variables(self):
         return [
             *self.representation_path.trainable_variables,
@@ -103,56 +107,56 @@ class Model:
             *self.prediction_value_path.trainable_variables,
         ]
 
-    @tf.function
+    @ tf.function
     def representation(self, observation):
         raw_state = self.representation_path(observation)
         return self._scale_state(raw_state)
 
-    @tf.function
+    @ tf.function
     def dynamics(self, state, action):
         state_action = tf.concat([state, self._action_to_repr(action)], -1)
         reward = self.dynamics_reward_path(state_action)[:, 0]
         state = self.dynamics_state_path(state_action)
         return (reward, self._scale_state(state))
 
-    @tf.function
+    @ tf.function
     def prediction(self, state):
         policy = self.prediction_policy_path(state)
         value = self.prediction_value_path(state)[:, 0]
         return (policy, value)
 
-    @tf.function
+    @ tf.function
     def action_sampler(self, policy):
         if isinstance(self.action_space, gym.spaces.Discrete):
             return tf.random.categorical(policy, num_samples=1)[:, 0]
         else:
             return tf.map_fn(lambda x: tf.random.normal([1], mean=x), policy)
 
-    @tf.function
+    @ tf.function
     def policy_to_probabilities(self, policy):
         assert isinstance(self.action_space, gym.spaces.Discrete)
         return tf.nn.softmax(policy)
 
-    @tf.function
+    @ tf.function
     def loss_reward(self, true, pred):
         true = tf.expand_dims(true, 1)
         pred = tf.expand_dims(pred, 1)
         return tf.losses.MSE(true, pred)
 
-    @tf.function
+    @ tf.function
     def loss_value(self, true, pred):
         true = tf.expand_dims(true, 1)
         pred = tf.expand_dims(pred, 1)
         return tf.losses.MSE(true, pred)
 
-    @tf.function
+    @ tf.function
     def loss_policy(self, true, pred):
         if isinstance(self.action_space, gym.spaces.Discrete):
             return tf.losses.sparse_categorical_crossentropy(true, pred, from_logits=True)
         else:
             return tf.losses.MSE(true, pred)
 
-    @tf.function
+    @ tf.function
     def loss_regularization(self):
         variables = self.trainable_variables
         return tf.add_n([tf.nn.l2_loss(variable) for variable in variables])
