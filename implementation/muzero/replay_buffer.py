@@ -5,7 +5,7 @@ import numpy
 import ray
 import torch
 
-import models
+import muzero.models
 
 
 @ray.remote
@@ -35,13 +35,15 @@ class ReplayBuffer:
                 for i, root_value in enumerate(game_history.root_values):
                     priority = (
                         numpy.abs(
-                            root_value - self.compute_target_value(game_history, i)
+                            root_value -
+                            self.compute_target_value(game_history, i)
                         )
                         ** self.config.PER_alpha
                     )
                     priorities.append(priority)
 
-                game_history.priorities = numpy.array(priorities, dtype="float32")
+                game_history.priorities = numpy.array(
+                    priorities, dtype="float32")
                 game_history.game_priority = numpy.max(game_history.priorities)
 
         self.buffer[self.num_played_games] = game_history
@@ -55,8 +57,10 @@ class ReplayBuffer:
             del self.buffer[del_id]
 
         if shared_storage:
-            shared_storage.set_info.remote("num_played_games", self.num_played_games)
-            shared_storage.set_info.remote("num_played_steps", self.num_played_steps)
+            shared_storage.set_info.remote(
+                "num_played_games", self.num_played_games)
+            shared_storage.set_info.remote(
+                "num_played_steps", self.num_played_steps)
 
     def get_buffer(self):
         return self.buffer
@@ -101,7 +105,8 @@ class ReplayBuffer:
                 * len(actions)
             )
             if self.config.PER:
-                weight_batch.append(1 / (self.total_samples * game_prob * pos_prob))
+                weight_batch.append(
+                    1 / (self.total_samples * game_prob * pos_prob))
 
         if self.config.PER:
             weight_batch = numpy.array(weight_batch, dtype="float32") / max(
@@ -155,8 +160,10 @@ class ReplayBuffer:
         """
         position_prob = None
         if self.config.PER and not force_uniform:
-            position_probs = game_history.priorities / sum(game_history.priorities)
-            position_index = numpy.random.choice(len(position_probs), p=position_probs)
+            position_probs = game_history.priorities / \
+                sum(game_history.priorities)
+            position_index = numpy.random.choice(
+                len(position_probs), p=position_probs)
             position_prob = position_probs[position_index]
         else:
             position_index = numpy.random.choice(len(position_probs))
@@ -185,7 +192,8 @@ class ReplayBuffer:
                 priority = priorities[i, :]
                 start_index = game_pos
                 end_index = min(
-                    game_pos + len(priority), len(self.buffer[game_id].priorities)
+                    game_pos +
+                    len(priority), len(self.buffer[game_id].priorities)
                 )
                 self.buffer[game_id].priorities[start_index:end_index] = priority[
                     : end_index - start_index
@@ -213,7 +221,7 @@ class ReplayBuffer:
             value = 0
 
         for i, reward in enumerate(
-            game_history.reward_history[index + 1 : bootstrap_index + 1]
+            game_history.reward_history[index + 1: bootstrap_index + 1]
         ):
             value += (
                 reward
@@ -236,12 +244,15 @@ class ReplayBuffer:
 
             if current_index < len(game_history.root_values):
                 target_values.append(value)
-                target_rewards.append(game_history.reward_history[current_index])
-                target_policies.append(game_history.child_visits[current_index])
+                target_rewards.append(
+                    game_history.reward_history[current_index])
+                target_policies.append(
+                    game_history.child_visits[current_index])
                 actions.append(game_history.action_history[current_index])
             elif current_index == len(game_history.root_values):
                 target_values.append(0)
-                target_rewards.append(game_history.reward_history[current_index])
+                target_rewards.append(
+                    game_history.reward_history[current_index])
                 # Uniform policy
                 target_policies.append(
                     [
@@ -284,7 +295,8 @@ class Reanalyse:
         # Initialize the network
         self.model = models.MuZeroNetwork(self.config)
         self.model.set_weights(initial_weights)
-        self.model.to(torch.device("cuda" if self.config.reanalyse_on_gpu else "cpu"))
+        self.model.to(torch.device(
+            "cuda" if self.config.reanalyse_on_gpu else "cpu"))
         self.model.eval()
 
     def reanalyse(self, replay_buffer, shared_storage):
@@ -318,7 +330,8 @@ class Reanalyse:
                 .to(next(self.model.parameters()).device)
             )
             values = models.support_to_scalar(
-                self.model.initial_inference(observations)[0], self.config.support_size,
+                self.model.initial_inference(observations)[
+                    0], self.config.support_size,
             )
             for i in range(len(game_history.root_values)):
                 game_history.root_values[i] = values[i].item()

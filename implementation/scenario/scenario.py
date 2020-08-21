@@ -6,7 +6,7 @@ from pyrep.const import PrimitiveShape
 from pyrep.const import JointMode
 from pyrep.objects.shape import Shape
 
-from dobot import Dobot
+from .dobot import Dobot
 
 from typing import List
 
@@ -75,10 +75,3 @@ class Scenario:
         for cube in self.cubes:
             result.extend(cube.get_position())
         return result
-
-
-scenario = Scenario()
-scenario.reset()
-
-while True:
-    print(scenario.step([random.random() - 0.5 for _ in range(5)]))

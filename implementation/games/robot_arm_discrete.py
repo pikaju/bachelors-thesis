@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from .abstract_game import AbstractGame
+from muzero.games.abstract_game import AbstractGame
 from scenario.scenario import Scenario
 
 
@@ -142,18 +142,8 @@ class Game(AbstractGame):
     def __init__(self, seed=None):
         self.env = Scenario()
         self._action_map = []
-        for suction_cup in [True, False]:
-            for joint_target_0 in [-0.1, 0.0, 0.1]:
-                for joint_target_1 in [-0.1, 0.0, 0.1]:
-                    for joint_target_2 in [-0.1, 0.0, 0.1]:
-                        for joint_target_3 in [-0.1, 0.0, 0.1]:
-                            self._action_map.append([
-                                joint_target_0,
-                                joint_target_1,
-                                joint_target_2,
-                                joint_target_3,
-                                1.0 if suction_cup else -1.0
-                            ])
+        self._action_map.append([0.0, 0.0, 0.0, 0.0, 1.0])
+        self._action_map.append([0.0, 0.0, 0.0, 0.0, -1.0])
 
     def step(self, action):
         """

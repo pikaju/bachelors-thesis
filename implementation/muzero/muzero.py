@@ -11,12 +11,12 @@ import ray
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-import diagnose_model
-import models
-import replay_buffer
-import self_play
-import shared_storage
-import trainer
+import muzero.diagnose_model
+import muzero.models
+import muzero.replay_buffer
+import muzero.self_play
+import muzero.shared_storage
+import muzero.trainer
 
 
 class MuZero:
@@ -28,7 +28,7 @@ class MuZero:
         in the "./games" directory.
 
         config (dict, MuZeroConfig, optional): Override the default config of the game.
-        
+
         split_resources_in (int, optional): Split the GPU usage when using concurent muzero instances.
 
     Example:
@@ -125,7 +125,8 @@ class MuZero:
         self.shared_storage_worker = shared_storage.SharedStorage.remote(
             copy.deepcopy(self.muzero_weights), self.config,
         )
-        self.replay_buffer_worker = replay_buffer.ReplayBuffer.remote(self.config)
+        self.replay_buffer_worker = replay_buffer.ReplayBuffer.remote(
+            self.config)
         if self.config.use_last_model_value:
             self.reanalyse_worker = replay_buffer.Reanalyse.options(
                 num_cpus=0,
@@ -137,7 +138,8 @@ class MuZero:
                 self.replay_buffer_worker.save_game.remote(
                     self.replay_buffer[game_history_id], self.shared_storage_worker
                 )
-            print(f"\nLoaded {len(self.replay_buffer)} games from replay buffer.")
+            print(
+                f"\nLoaded {len(self.replay_buffer)} games from replay buffer.")
         self.self_play_workers = [
             self_play.SelfPlay.options(
                 num_cpus=0,
@@ -249,13 +251,17 @@ class MuZero:
                     info["training_step"] / max(1, info["num_played_steps"]),
                     counter,
                 )
-                writer.add_scalar("2.Workers/6.Learning rate", info["lr"], counter)
+                writer.add_scalar("2.Workers/6.Learning rate",
+                                  info["lr"], counter)
                 writer.add_scalar(
                     "3.Loss/1.Total weighted loss", info["total_loss"], counter
                 )
-                writer.add_scalar("3.Loss/Value loss", info["value_loss"], counter)
-                writer.add_scalar("3.Loss/Reward loss", info["reward_loss"], counter)
-                writer.add_scalar("3.Loss/Policy loss", info["policy_loss"], counter)
+                writer.add_scalar("3.Loss/Value loss",
+                                  info["value_loss"], counter)
+                writer.add_scalar("3.Loss/Reward loss",
+                                  info["reward_loss"], counter)
+                writer.add_scalar("3.Loss/Policy loss",
+                                  info["policy_loss"], counter)
                 print(
                     f'Last test reward: {info["total_reward"]:.2f}. Training step: {info["training_step"]}/{self.config.training_steps}. Played games: {info["num_played_games"]}. Loss: {info["total_loss"]:.2f}',
                     end="\r",
@@ -265,8 +271,10 @@ class MuZero:
         except KeyboardInterrupt:
             pass
 
-        self.muzero_weights = ray.get(self.shared_storage_worker.get_weights.remote())
-        self.replay_buffer = ray.get(self.replay_buffer_worker.get_buffer.remote())
+        self.muzero_weights = ray.get(
+            self.shared_storage_worker.get_weights.remote())
+        self.replay_buffer = ray.get(
+            self.replay_buffer_worker.get_buffer.remote())
 
         self.terminate_workers()
 
@@ -275,7 +283,8 @@ class MuZero:
             print("\n\nPersisting replay buffer games to disk...")
             pickle.dump(
                 self.replay_buffer,
-                open(os.path.join(self.config.results_path, "replay_buffer.pkl"), "wb"),
+                open(os.path.join(self.config.results_path,
+                                  "replay_buffer.pkl"), "wb"),
             )
 
     def terminate_workers(self):
@@ -343,7 +352,8 @@ class MuZero:
         ray.get(self.self_play_worker.close_game.remote())
 
         if len(self.config.players) == 1:
-            result = numpy.mean([sum(history.reward_history) for history in results])
+            result = numpy.mean([sum(history.reward_history)
+                                 for history in results])
         else:
             result = numpy.mean(
                 [
@@ -378,8 +388,10 @@ class MuZero:
         # Load replay buffer
         if replay_buffer_path:
             if os.path.exists(replay_buffer_path):
-                self.replay_buffer = pickle.load(open(replay_buffer_path, "rb"))
-                print(f"\nInitializing replay buffer with {replay_buffer_path}")
+                self.replay_buffer = pickle.load(
+                    open(replay_buffer_path, "rb"))
+                print(
+                    f"\nInitializing replay buffer with {replay_buffer_path}")
             else:
                 print(
                     f"Warning: Replay buffer path '{replay_buffer_path}' doesn't exist.  Using empty buffer."
@@ -465,7 +477,8 @@ def hyperparameter_search(
                     if 0 < budget:
                         param = optimizer.ask()
                         print(f"Launching new experiment: {param.value}")
-                        muzero = MuZero(game_name, param.value, parallel_experiments)
+                        muzero = MuZero(game_name, param.value,
+                                        parallel_experiments)
                         muzero.param = param
                         muzero.train(False)
                         running_experiments[i] = muzero
@@ -486,11 +499,13 @@ def hyperparameter_search(
         os.makedirs(best_training["config"].results_path, exist_ok=True)
         torch.save(
             best_training["weights"],
-            os.path.join(best_training["config"].results_path, "model.weights"),
+            os.path.join(
+                best_training["config"].results_path, "model.weights"),
         )
         # Save the recommended hyperparameters
         text_file = open(
-            os.path.join(best_training["config"].results_path, "best_parameters.txt"),
+            os.path.join(
+                best_training["config"].results_path, "best_parameters.txt"),
             "w",
         )
         text_file.write(str(recommendation.value))
@@ -553,7 +568,8 @@ if __name__ == "__main__":
                 "Enter path for existing replay buffer, or ENTER if none: "
             )
             while replay_buffer_path and not os.path.isfile(replay_buffer_path):
-                replay_buffer_path = input("Invalid replay buffer path. Try again: ")
+                replay_buffer_path = input(
+                    "Invalid replay buffer path. Try again: ")
             muzero.load_model(
                 weights_path=weights_path, replay_buffer_path=replay_buffer_path
             )
@@ -572,7 +588,8 @@ if __name__ == "__main__":
             while not done:
                 action = env.human_to_action()
                 observation, reward, done = env.step(action)
-                print(f"\nAction: {env.action_to_string(action)}\nReward: {reward}")
+                print(
+                    f"\nAction: {env.action_to_string(action)}\nReward: {reward}")
                 env.render()
         elif choice == 6:
             # Define here the parameters to tune
@@ -583,7 +600,8 @@ if __name__ == "__main__":
             parallel_experiments = 2
             lr_init = nevergrad.p.Log(a_min=0.0001, a_max=0.1)
             discount = nevergrad.p.Scalar(lower=0.95, upper=0.9999)
-            parametrization = nevergrad.p.Dict(lr_init=lr_init, discount=discount)
+            parametrization = nevergrad.p.Dict(
+                lr_init=lr_init, discount=discount)
             best_hyperparameters = hyperparameter_search(
                 game_name, parametrization, budget, parallel_experiments, 10
             )
@@ -594,7 +612,7 @@ if __name__ == "__main__":
 
     ray.shutdown()
 
-    ## Successive training, create a new config file for each experiment
+    # Successive training, create a new config file for each experiment
     # experiments = ["cartpole", "tictactoe"]
     # for experiment in experiments:
     #     print(f"\nStarting experiment {experiment}")
