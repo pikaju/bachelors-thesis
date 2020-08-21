@@ -19,7 +19,8 @@ class Scenario:
     def reset(self):
         if self.pr.running:
             self.pr.stop()
-        self.pr.launch('scenario.ttt', headless=False)
+            self.pr.shutdown()
+        self.pr.launch('scenario.ttt', headless=True)
 
         self.arm = Dobot()
         self.cubes = []
