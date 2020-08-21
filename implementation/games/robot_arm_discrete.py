@@ -1,5 +1,9 @@
+import os
+import datetime
+
 import torch
 import numpy as np
+
 from muzero.games.abstract_game import AbstractGame
 from scenario.scenario import Scenario
 
@@ -14,9 +18,9 @@ class MuZeroConfig:
 
         # Game
         # Dimensions of the game observation, must be 3D (channel, height, width). For a 1D array, please reshape it to (1, 1, length of array)
-        self.observation_shape = (1, 1, 8)
+        self.observation_shape = (1, 1, 8 * 3 + 4 + 1)
         # Fixed list of all possible actions. You should only edit the length
-        self.action_space = list(range(4))
+        self.action_space = list(range(10))
         # List of players. You should only edit the length
         self.players = list(range(1))
         # Number of previous observations and previous actions to add to the current observation
@@ -141,24 +145,23 @@ class Game(AbstractGame):
 
     def __init__(self, seed=None):
         self.env = Scenario()
-        self._action_map = []
-        self._action_map.append([0.0, 0.0, 0.0, 0.0, 1.0])
-        self._action_map.append([0.0, 0.0, 0.0, 0.0, -1.0])
+        self._suction_cup_state = False
 
     def step(self, action):
-        """
-        Apply action to the game.
+        mapped_action = None
+        if action == 8:
+            self._suction_cup_state = True
+            mapped_action = [*[0.0 for _ in range(4)], 1.0]
+        elif action == 9:
+            self._suction_cup_state = False
+            mapped_action = [*[0.0 for _ in range(4)], -1.0]
+        else:
+            mapped_action = [*[0.0 for _ in range(4)],
+                             1.0 if self._suction_cup_state else -1.0]
+            mapped_action[action // 2] = 1.0 if action % 2 == 0 else -1.0
 
-        Args:
-            action : action of the action_space to take.
-
-        Returns:
-            The new observation, the reward and a boolean if the game has ended.
-        """
-        observation = self.env.step(action)
-        reward = 0.0
-        done = False
-        return numpy.array([[observation]]), reward, done
+        observation, reward, done = self.env.step(mapped_action)
+        return np.array([[[*observation, 1.0 if self._suction_cup_state else 0.0]]]), reward, done
 
     def legal_actions(self):
         """
@@ -171,7 +174,7 @@ class Game(AbstractGame):
         Returns:
             An array of integers, subset of the action space.
         """
-        return list(range(len(self._action_map)))
+        return list(range(10))
 
     def reset(self):
         """
@@ -180,7 +183,8 @@ class Game(AbstractGame):
         Returns:
             Initial observation of the game.
         """
-        return numpy.array([[self.env.reset()]])
+        self._suction_cup_state = False
+        return np.array([[[*self.env.reset(), 0.0]]])
 
     def close(self):
         """

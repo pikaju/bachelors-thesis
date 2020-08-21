@@ -56,7 +56,10 @@ class Scenario:
 
         self.pr.step()
 
-        return self._create_observation()
+        reward = len(self.arm.suction_cup.get_grasped_objects())
+        done = self.pr.get_simulation_timestep() > 16
+
+        return self._create_observation(), reward, done
 
     def close(self):
         self.pr.shutdown()

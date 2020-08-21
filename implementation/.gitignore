@@ -1,3 +1,6 @@
+# Setup
+.sources
+
 # Environments
 .env
 .venv
@@ -7,3 +10,6 @@ ENV/
 
 # CoppeliaSim
 coppeliasim/
+
+# Results
+results

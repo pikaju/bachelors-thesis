@@ -11,12 +11,12 @@ import ray
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-import muzero.diagnose_model
-import muzero.models
-import muzero.replay_buffer
-import muzero.self_play
-import muzero.shared_storage
-import muzero.trainer
+from muzero import diagnose_model
+from muzero import models
+from muzero import replay_buffer
+from muzero import self_play
+from muzero import shared_storage
+from muzero import trainer
 
 
 class MuZero:

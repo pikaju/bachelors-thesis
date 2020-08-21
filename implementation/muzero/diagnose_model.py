@@ -3,7 +3,7 @@ import numpy
 import seaborn
 import torch
 
-import muzero.models
+from muzero import models
 from muzero.self_play import MCTS, Node, SelfPlay
 
 

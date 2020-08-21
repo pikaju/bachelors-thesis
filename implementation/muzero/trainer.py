@@ -4,7 +4,7 @@ import numpy
 import ray
 import torch
 
-import muzero.models
+from muzero import models
 
 
 @ray.remote
