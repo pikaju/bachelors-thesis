@@ -25,13 +25,13 @@ class Scenario:
         self.arm = Dobot()
         self.cubes = []
         for _ in range(self.num_cubes):
-            angle = 2 * math.pi * random.random()
+            angle = 2 * math.pi * (random.random() * 0.5 + 0.5)
             radius = random.random() * 0.1 + 0.15
             x = math.cos(angle) * radius
             y = math.sin(angle) * radius
             self.cubes.append(Shape.create(
                 type=PrimitiveShape.CUBOID,
-                position=[x, y, 0.2],
+                position=[x, y, 0.0025],
                 size=[0.05, 0.05, 0.05],
                 color=[random.random() for _ in range(3)],
             ))
