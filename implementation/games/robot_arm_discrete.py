@@ -33,9 +33,9 @@ class MuZeroConfig:
 
         # Self-Play
         # Number of simultaneous threads/workers self-playing to feed the replay buffer
-        self.num_workers = 1
+        self.num_workers = 8
         self.selfplay_on_gpu = False
-        self.max_moves = 700  # Maximum number of moves if game is not finished before
+        self.max_moves = 256  # Maximum number of moves if game is not finished before
         self.num_simulations = 50  # Number of future moves self-simulated
         self.discount = 0.99  # Chronological discount of the reward
         # Number of moves before dropping the temperature given by visit_softmax_temperature_fn to 0 (ie selecting the best action). If None, visit_softmax_temperature_fn is used every time
@@ -118,7 +118,7 @@ class MuZeroConfig:
 
         # Reanalyze (See paper appendix Reanalyse)
         # Use the last model to provide a fresher, stable n-step value (See paper appendix Reanalyze)
-        self.use_last_model_value = True
+        self.use_last_model_value = False
         self.reanalyse_on_gpu = False
 
         # Best known ratio for deterministic version: 0.8 --> 0.4 in 250 self played game (self_play_delay = 25 on GTX 1050Ti Max-Q).
