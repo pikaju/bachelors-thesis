@@ -9,3 +9,4 @@ class Dobot:
             joint.set_control_loop_enabled(False)
 
         self.suction_cup = DobotSuctionCup()
+        self.suction_cup_sensor = self.suction_cup._proximity_sensor

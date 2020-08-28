@@ -1,6 +1,8 @@
 import math
 import random
 
+import numpy as np
+
 from pyrep import PyRep
 from pyrep.const import PrimitiveShape
 from pyrep.const import JointMode
@@ -57,7 +59,7 @@ class Scenario:
 
         self.pr.step()
 
-        reward = len(self.arm.suction_cup.get_grasped_objects())
+        reward = self._get_reward()
         done = self.pr.get_simulation_timestep() > 16
 
         return self._create_observation(), reward, done
@@ -79,3 +81,14 @@ class Scenario:
         for cube in self.cubes:
             result.extend(cube.get_position())
         return result
+
+    def _get_reward(self):
+        grasped_objects = len(self.arm.suction_cup.get_grasped_objects())
+        proximity_bonus = 0.0
+        sensor_pos = np.array(self.arm.suction_cup_sensor.get_position())
+        for cube in self.cubes:
+            cube_pos = np.array(cube.get_position())
+            distance = np.linalg.norm(cube_pos - sensor_pos)
+            proximity_bonus += 1.0 / (distance ** 2 + 1.0)
+
+        return grasped_objects + proximity_bonus * 0.1
