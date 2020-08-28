@@ -8,6 +8,9 @@ from muzero.games.abstract_game import AbstractGame
 from scenario.scenario import Scenario
 
 
+num_cubes = 1
+
+
 class MuZeroConfig:
     def __init__(self):
         # More information is available here: https://github.com/werner-duvaud/muzero-general/wiki/Hyperparameter-Optimization
@@ -18,7 +21,7 @@ class MuZeroConfig:
 
         # Game
         # Dimensions of the game observation, must be 3D (channel, height, width). For a 1D array, please reshape it to (1, 1, length of array)
-        self.observation_shape = (1, 1, 8 * 3 + 4 + 1)
+        self.observation_shape = (1, 1, num_cubes * 3 + 4 + 1)
         # Fixed list of all possible actions. You should only edit the length
         self.action_space = list(range(10))
         # List of players. You should only edit the length
@@ -144,7 +147,7 @@ class Game(AbstractGame):
     """
 
     def __init__(self, seed=None):
-        self.env = Scenario()
+        self.env = Scenario(num_cubes)
         self._suction_cup_state = False
 
     def step(self, action):
