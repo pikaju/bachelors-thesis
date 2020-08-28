@@ -89,6 +89,6 @@ class Scenario:
         for cube in self.cubes:
             cube_pos = np.array(cube.get_position())
             distance = np.linalg.norm(cube_pos - sensor_pos)
-            proximity_bonus += 1.0 / (distance ** 2 + 1.0)
+            proximity_bonus += 1.0 / ((distance * 8.0 + 1.0) ** 2)
 
         return grasped_objects + proximity_bonus * 0.1
