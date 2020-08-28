@@ -84,11 +84,13 @@ class Scenario:
 
     def _get_reward(self):
         grasped_objects = len(self.arm.suction_cup.get_grasped_objects())
+
         proximity_bonus = 0.0
         sensor_pos = np.array(self.arm.suction_cup_sensor.get_position())
         for cube in self.cubes:
             cube_pos = np.array(cube.get_position())
             distance = np.linalg.norm(cube_pos - sensor_pos)
-            proximity_bonus += 1.0 / ((distance * 8.0 + 1.0) ** 2)
+            bonus = 1.0 / (distance * 8.0 + 1.0)
+            proximity_bonus = max(proximity_bonus, bonus)
 
         return grasped_objects + proximity_bonus * 0.1
