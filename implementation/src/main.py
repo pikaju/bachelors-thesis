@@ -11,7 +11,9 @@ import gym
 from gym import envs
 
 from config import *
+import scenario.register
 from replay_buffer import PrioritizedReplayBuffer
+
 from muzero.model import Model
 from muzero.muzero import MuZeroMCTS, MuZeroPSO
 
@@ -140,7 +142,7 @@ def test():
     def generate_config(episode: int):
         return Config(
             summary_directory='./logs/mcts9',
-            environment_name='CartPole-v1',
+            environment_name='BachelorThesis-v0',
             discount_factor=0.97,
             render=True,
             training=TrainingConfig(
