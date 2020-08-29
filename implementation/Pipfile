@@ -9,8 +9,9 @@ autopep8 = "*"
 
 [packages]
 tensorflow = "*"
-gym = {extras = ["all"],version = "*"}
+gym = {extras = ["classic_control", "box2d"],version = "*"}
 baselines = {editable = true,git = "https://github.com/openai/baselines",ref = "tf2"}
+pyrep = {editable = true, git = "https://github.com/stepjam/PyRep.git"}
 
 [requires]
 python_version = "3.8"
