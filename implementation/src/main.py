@@ -12,8 +12,8 @@ from gym import envs
 
 from config import *
 from replay_buffer import PrioritizedReplayBuffer
-from model import Model
-from muzero import MuZeroMCTS, MuZeroPSO
+from muzero.model import Model
+from muzero.muzero import MuZeroMCTS, MuZeroPSO
 
 
 def run_env(config_generator: Callable[[int], Config]):

@@ -85,19 +85,19 @@ class Model:
             )
         ], name='prediction_value')
 
-    @ tf.function
+    @tf.function
     def _scale_state(self, state):
         state_min = tf.reduce_min(state, -1, True)
         state_max = tf.reduce_max(state, -1, True)
         return (state - state_min) / (state_max - state_min)
 
-    @ tf.function
+    @tf.function
     def _action_to_repr(self, action):
         if isinstance(self.action_space, gym.spaces.Discrete):
             action = tf.one_hot(action, self.action_space.n, 1.0, 0.0, axis=-1)
         return action
 
-    @ property
+    @property
     def trainable_variables(self):
         return [
             *self.representation_path.trainable_variables,
@@ -107,56 +107,56 @@ class Model:
             *self.prediction_value_path.trainable_variables,
         ]
 
-    @ tf.function
+    @tf.function
     def representation(self, observation):
         raw_state = self.representation_path(observation)
         return self._scale_state(raw_state)
 
-    @ tf.function
+    @tf.function
     def dynamics(self, state, action):
         state_action = tf.concat([state, self._action_to_repr(action)], -1)
         reward = self.dynamics_reward_path(state_action)[:, 0]
         state = self.dynamics_state_path(state_action)
         return (reward, self._scale_state(state))
 
-    @ tf.function
+    @tf.function
     def prediction(self, state):
         policy = self.prediction_policy_path(state)
         value = self.prediction_value_path(state)[:, 0]
         return (policy, value)
 
-    @ tf.function
+    @tf.function
     def action_sampler(self, policy):
         if isinstance(self.action_space, gym.spaces.Discrete):
             return tf.random.categorical(policy, num_samples=1)[:, 0]
         else:
             return tf.map_fn(lambda x: tf.random.normal([1], mean=x), policy)
 
-    @ tf.function
+    @tf.function
     def policy_to_probabilities(self, policy):
         assert isinstance(self.action_space, gym.spaces.Discrete)
         return tf.nn.softmax(policy)
 
-    @ tf.function
+    @tf.function
     def loss_reward(self, true, pred):
         true = tf.expand_dims(true, 1)
         pred = tf.expand_dims(pred, 1)
         return tf.losses.MSE(true, pred)
 
-    @ tf.function
+    @tf.function
     def loss_value(self, true, pred):
         true = tf.expand_dims(true, 1)
         pred = tf.expand_dims(pred, 1)
         return tf.losses.MSE(true, pred)
 
-    @ tf.function
+    @tf.function
     def loss_policy(self, true, pred):
         if isinstance(self.action_space, gym.spaces.Discrete):
             return tf.losses.sparse_categorical_crossentropy(true, pred, from_logits=True)
         else:
             return tf.losses.MSE(true, pred)
 
-    @ tf.function
+    @tf.function
     def loss_regularization(self):
         variables = self.trainable_variables
         return tf.add_n([tf.nn.l2_loss(variable) for variable in variables])
