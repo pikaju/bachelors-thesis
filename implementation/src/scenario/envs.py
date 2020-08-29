@@ -14,8 +14,7 @@ from pyrep.objects.shape import Shape
 from scenario.dobot import Dobot
 
 
-SCENE_FILE = join(dirname(abspath(__file__)),
-                  'scenario.ttt')
+SCENE_FILE = join(dirname(abspath(__file__)), 'scenario.ttt')
 
 
 class RobotArm(gym.Env):
