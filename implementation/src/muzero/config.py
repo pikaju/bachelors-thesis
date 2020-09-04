@@ -1,5 +1,8 @@
 import tensorflow as tf
 
+from common.replay_buffer import ReplayBufferConfig
+from muzero.model import ModelConfig
+
 
 class TrainingConfig:
     def __init__(
@@ -14,25 +17,6 @@ class TrainingConfig:
         regularization_learning_rate=0.001,
         batch_size=256,
         iterations=16,
-    ):
-        self.__dict__.update(locals())
-
-
-class ReplayBufferConfig:
-    def __init__(
-        self,
-        size=1024,
-        alpha=1.0,
-        beta=1.0,
-    ):
-        self.__dict__.update(locals())
-
-
-class ModelConfig:
-    def __init__(
-        self,
-        activation=tf.nn.relu,
-        state_size=16,
     ):
         self.__dict__.update(locals())
 

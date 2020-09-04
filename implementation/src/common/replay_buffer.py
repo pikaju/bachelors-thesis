@@ -1,8 +1,17 @@
 import numpy as np
 import random
 
-from config import ReplayBufferConfig
-from sum_tree import SumTree
+from common.sum_tree import SumTree
+
+
+class ReplayBufferConfig:
+    def __init__(
+        self,
+        size=1024,
+        alpha=1.0,
+        beta=1.0,
+    ):
+        self.__dict__.update(locals())
 
 
 class PrioritizedReplayBuffer:

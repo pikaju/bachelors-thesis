@@ -3,7 +3,14 @@ import math
 import tensorflow as tf
 import gym
 
-from config import ModelConfig
+
+class ModelConfig:
+    def __init__(
+        self,
+        activation=tf.nn.relu,
+        state_size=16,
+    ):
+        self.__dict__.update(locals())
 
 
 class Model:

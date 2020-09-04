@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-from config import MuZeroConfig
+from muzero.config import MuZeroConfig
 import muzero.mcts as mcts
 
 
