@@ -35,9 +35,14 @@ class RobotArm(gym.Env):
 
     def reset(self):
         if self.pr.running:
-            self.pr.stop()
-            self.pr.shutdown()
-        self.pr.launch(SCENE_FILE, headless=True)
+            for cube in self.cubes:
+                cube.remove()
+            self.arm.reset()
+
+        if not self.pr.running:
+            self.pr.launch(SCENE_FILE, headless=True)
+            self.pr.start()
+
         self.pr.current_timestep = 0.0
 
         self.arm = Dobot()
@@ -55,8 +60,6 @@ class RobotArm(gym.Env):
                 size=[0.05, 0.05, 0.05],
                 color=[random.random() for _ in range(3)],
             ))
-
-        self.pr.start()
 
         return self._create_observation()
 
