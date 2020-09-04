@@ -61,6 +61,8 @@ class RobotArm(gym.Env):
                 color=[random.random() for _ in range(3)],
             ))
 
+        self.prev_proximity_bonus = None
+
         return self._create_observation()
 
     def step(self, action):
@@ -132,4 +134,10 @@ class RobotArm(gym.Env):
             bonus = -distance
             proximity_bonus += bonus
 
-        return grasped_objects + proximity_bonus
+        if self.prev_proximity_bonus == None:
+            self.prev_proximity_bonus = proximity_bonus
+        reward = grasped_objects + \
+            (proximity_bonus - self.prev_proximity_bonus)
+        self.prev_proximity_bonus = proximity_bonus
+
+        return reward
