@@ -1,3 +1,4 @@
+from a2c.model import Model
 
 episode = 0
 while True:
@@ -11,3 +12,4 @@ while True:
 
 
 def train():
+    model = Model()
