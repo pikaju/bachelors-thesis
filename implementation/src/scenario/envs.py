@@ -15,6 +15,7 @@ from scenario.dobot import Dobot
 
 
 SCENE_FILE = join(dirname(abspath(__file__)), 'scenario.ttt')
+ROBOT_FILE = join(dirname(abspath(__file__)), 'dobot.ttm')
 
 
 class RobotArm(gym.Env):
@@ -37,14 +38,15 @@ class RobotArm(gym.Env):
         if self.pr.running:
             for cube in self.cubes:
                 cube.remove()
-            self.arm.reset()
+            self.arm_model.remove()
 
         if not self.pr.running:
-            self.pr.launch(SCENE_FILE, headless=True)
+            self.pr.launch('', headless=False)
             self.pr.start()
 
         self.pr.current_timestep = 0.0
 
+        self.arm_model = self.pr.import_model(ROBOT_FILE)
         self.arm = Dobot()
         self.suction_cup_state = False
 
