@@ -1,4 +1,5 @@
 import tensorflow as tf
+import gym
 
 
 class ModelConfig:
@@ -38,6 +39,7 @@ class Model:
         self.policy_head = tf.keras.Sequential([
             *[
                 tf.keras.layers.Dense(
+                    units,
                     activation=config.activation,
                     kernel_initializer='he_normal',
                 ) for units in config.hidden_policy_layers
@@ -52,6 +54,7 @@ class Model:
         self.value_head = tf.keras.Sequential([
             *[
                 tf.keras.layers.Dense(
+                    units,
                     kernel_initializer='he_normal',
                 ) for units in config.hidden_value_layers
             ],

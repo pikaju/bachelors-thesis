@@ -40,7 +40,7 @@ class RobotArm(gym.Env):
             self.arm_model.remove()
 
         if not self.pr.running:
-            self.pr.launch('', headless=False)
+            self.pr.launch('', headless=True)
             self.pr.start()
 
         self.pr.current_timestep = 0.0
