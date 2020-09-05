@@ -40,7 +40,7 @@ class RobotArm(gym.Env):
             self.arm_model.remove()
 
         if not self.pr.running:
-            self.pr.launch('', headless=True)
+            self.pr.launch('', headless=False)
             self.pr.start()
 
         self.pr.current_timestep = 0.0
@@ -67,6 +67,8 @@ class RobotArm(gym.Env):
         return self._create_observation()
 
     def step(self, action):
+        # Hold the arm still
+        [joint.set_joint_target_velocity(0.0) for joint in self.arm.joints]
         # Individual joint movements
         if action == 0:
             self.arm.joints[0].set_joint_target_velocity(-1.0)

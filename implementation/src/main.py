@@ -11,7 +11,7 @@ import scenario.register
 def main():
     log_dir = './logs/a2c'
     a2c.learn('mlp', SubprocVecEnv(
-        [lambda: Monitor(gym.make('BachelorThesis-v0'), log_dir) for _ in range(4)]))
+        [lambda: Monitor(gym.make('BachelorThesis-v0'), log_dir) for _ in range(1)]))
 
 
 if __name__ == '__main__':
