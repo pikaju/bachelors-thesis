@@ -140,24 +140,24 @@ def run_env(config_generator: Callable[[int], Config]):
 def train():
     def generate_config(episode: int):
         return Config(
-            summary_directory='./logs/mcts9',
-            environment_name='CartPole-v1',
+            summary_directory='./logs/mcts0',
+            environment_name='BachelorThesis-v0',
             discount_factor=0.97,
             render=True,
             training=TrainingConfig(
-                reward_factor=0.1,
+                reward_factor=1.0,
                 learning_rate=0.002 * 0.99 ** episode,
                 batch_size=512,
                 iterations=32,
             ),
             replay_buffer=ReplayBufferConfig(
-                size=2048,
+                size=8192,
             ),
             model=ModelConfig(
                 state_size=16,
             ),
             muzero=MuZeroConfig(
-                num_simulations=16,
+                num_simulations=32,
                 temperature=1.0 * 0.99 ** episode,
             ),
         )

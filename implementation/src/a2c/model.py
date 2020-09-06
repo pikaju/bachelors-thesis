@@ -76,7 +76,7 @@ class Model:
     def forward(self, obs):
         base_output = self.shared_base(obs)
         policy_output = self.policy_head(base_output)
-        value_output = self.value_head(base_output)
+        value_output = tf.reshape(self.value_head(base_output), [-1])
         return policy_output, value_output
 
     @tf.function
