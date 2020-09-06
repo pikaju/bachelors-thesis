@@ -6,8 +6,8 @@ class ModelConfig:
     def __init__(
         self,
         activation=tf.nn.relu,
-        hidden_shared_layers=[8],
-        hidden_policy_layers=[8],
+        hidden_shared_layers=[16],
+        hidden_policy_layers=[16],
         hidden_value_layers=[8],
     ):
         self.__dict__.update(locals())
@@ -101,3 +101,8 @@ class Model:
     @tf.function
     def loss_value(self, true, pred):
         return tf.losses.MSE(true, pred)
+
+    @tf.function
+    def loss_entropy(self, pred):
+        dist = tf.nn.softmax(pred)
+        return tf.reduce_sum(dist * tf.math.log(dist), 1)

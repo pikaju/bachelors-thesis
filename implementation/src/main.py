@@ -5,7 +5,7 @@ from a2c.train import train as train_a2c
 
 
 def main():
-    train_muzero()
+    train_a2c()
 
 
 if __name__ == '__main__':
