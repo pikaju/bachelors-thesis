@@ -22,14 +22,14 @@ def run_env(config_generator: Callable[[int], Config]):
     def replay_candidate_to_sample(replay_candidate):
         rc = replay_candidate
         sample = []
-        bv = rc[-1][1] if rc[-1][-1] else rc[-1][2]
+        bv = rc[-1][2] if rc[-1][-1] else rc[-1][4]
         for i in range(config.training.unroll_steps):
             z = 0.0
             for j in range(i, len(rc) - 1):
-                z += config.discount_factor ** (j - i) * rc[j][1]
+                z += config.discount_factor ** (j - i) * rc[j][2]
             z += config.discount_factor ** (len(rc) - i) * bv
-            sample.append((rc[i][0], rc[i][1], z, rc[i][3]))
-        priority = abs(rc[0][2] - sample[0][2])
+            sample.append((rc[i][0], rc[i][1], rc[i][2], rc[i][3], z))
+        priority = abs(rc[0][4] - sample[0][-1])
         return priority, sample
 
     writer = tf.summary.create_file_writer(config.summary_directory)
@@ -66,7 +66,15 @@ def run_env(config_generator: Callable[[int], Config]):
             total_reward += reward
             reward *= config.training.reward_factor
 
-            replay_candidate.append((obs_t, reward, value, action, done))
+            replay_candidate.append((
+                obs_t,
+                action,
+                reward,
+                obs_tp1,
+                value,
+                done,
+            ))
+
             while len(replay_candidate) >= config.training.n or (done and len(replay_candidate) >= config.training.unroll_steps):
                 priority, sample = replay_candidate_to_sample(replay_candidate)
                 replay_buffer.add(priority, sample)
@@ -86,12 +94,13 @@ def run_env(config_generator: Callable[[int], Config]):
         for _ in range(config.training.iterations):
             batch = replay_buffer.sample(config.training.batch_size)
 
-            obses, rewards, zs, actions = zip(
+            obses, actions, rewards, obses_tp1, zs = zip(
                 *[zip(*entry[-1]) for entry in batch])
             obses = tf.constant(list(zip(*obses)), tf.float32)
-            rewards = tf.constant(list(zip(*rewards)), tf.float32)
-            zs = tf.constant(list(zip(*zs)), tf.float32)
             actions = tf.constant(list(zip(*actions)))
+            rewards = tf.constant(list(zip(*rewards)), tf.float32)
+            obses_tp1 = tf.constant(list(zip(*obses_tp1)), tf.float32)
+            zs = tf.constant(list(zip(*zs)), tf.float32)
 
             importance_weights = tf.constant(
                 [e[2] for e in batch], tf.float32)
@@ -99,9 +108,10 @@ def run_env(config_generator: Callable[[int], Config]):
             with tf.GradientTape() as tape:
                 losses = muzero.loss(
                     obses,
-                    rewards,
-                    zs,
                     actions,
+                    rewards,
+                    obses_tp1,
+                    zs,
                     model.loss_reward,
                     model.loss_value,
                     model.loss_policy,
@@ -142,7 +152,7 @@ def run_env(config_generator: Callable[[int], Config]):
 def test():
     def generate_config(episode: int):
         return Config(
-            summary_directory='./logs/with_double_gradient/test2',
+            summary_directory='./logs/with_0.4/test2',
             environment_name='CartPole-v1',
             discount_factor=0.97,
             render=False,

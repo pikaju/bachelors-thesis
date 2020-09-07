@@ -30,9 +30,10 @@ class MuZeroBase:
     def loss(
         self,
         obses,
-        rewards,
-        zs,
         actions,
+        rewards,
+        obses_tp1,
+        zs,
         loss_r,
         loss_v,
         loss_p,
@@ -51,7 +52,7 @@ class MuZeroBase:
             policy, value = self.prediction(state)
             reward, state = self.dynamics(scale_gradient(state), actions[i])
 
-            true_state = tf.stop_gradient(self.representation(obses[i]))
+            true_state = tf.stop_gradient(self.representation(obses_tp1[i]))
 
             r_losses += loss_r(rewards[i], reward) / unroll_steps
             v_losses += loss_v(zs[i], value) / unroll_steps
