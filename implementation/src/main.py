@@ -105,12 +105,14 @@ def run_env(config_generator: Callable[[int], Config]):
                     model.loss_reward,
                     model.loss_value,
                     model.loss_policy,
+                    model.loss_state,
                     model.loss_regularization,
                 )
                 learning_rates = [
                     config.training.reward_learning_rate,
                     config.training.value_learning_rate,
                     config.training.policy_learning_rate,
+                    config.training.state_learning_rate,
                     config.training.regularization_learning_rate,
                 ]
                 weighted_losses = []
@@ -129,6 +131,7 @@ def run_env(config_generator: Callable[[int], Config]):
                 tf.summary.scalar('loss/reward', wl[0], step=episode)
                 tf.summary.scalar('loss/value', wl[1], step=episode)
                 tf.summary.scalar('loss/policy', wl[2], step=episode)
+                tf.summary.scalar('loss/state', wl[3], step=episode)
                 tf.summary.scalar('loss/regularization',
                                   wl[3], step=episode)
 
@@ -139,18 +142,19 @@ def run_env(config_generator: Callable[[int], Config]):
 def test():
     def generate_config(episode: int):
         return Config(
-            summary_directory='./logs/mcts9',
+            summary_directory='./logs/with_double_gradient/test2',
             environment_name='CartPole-v1',
             discount_factor=0.97,
-            render=True,
+            render=False,
             training=TrainingConfig(
-                reward_factor=0.1,
+                reward_factor=1.0,
                 learning_rate=0.002 * 0.99 ** episode,
+                state_learning_rate=1.0,
                 batch_size=512,
                 iterations=32,
             ),
             replay_buffer=ReplayBufferConfig(
-                size=2048,
+                size=8192,
             ),
             model=ModelConfig(
                 state_size=16,

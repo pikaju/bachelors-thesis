@@ -36,13 +36,14 @@ class MuZeroBase:
         loss_r,
         loss_v,
         loss_p,
+        loss_s,
         regularization,
     ):
         unroll_steps = obses.shape[0]
         batch_size = obses.shape[1]
 
-        r_losses, v_losses, p_losses, reg_losses = [
-            tf.zeros([batch_size]) for _ in range(4)]
+        r_losses, v_losses, p_losses, s_losses, reg_losses = [
+            tf.zeros([batch_size]) for _ in range(5)]
         state = self.representation(obses[0])
 
         for i in tf.range(unroll_steps):
@@ -50,13 +51,16 @@ class MuZeroBase:
             policy, value = self.prediction(state)
             reward, state = self.dynamics(scale_gradient(state), actions[i])
 
+            true_state = tf.stop_gradient(self.representation(obses[i]))
+
             r_losses += loss_r(rewards[i], reward) / unroll_steps
             v_losses += loss_v(zs[i], value) / unroll_steps
             p_losses += loss_p(actions[i], policy) / unroll_steps
+            s_losses += loss_s(true_state, state) / unroll_steps
             reg_losses += tf.repeat(regularization(),
                                     repeats=[batch_size]) / unroll_steps
 
-        return [r_losses, v_losses, p_losses, reg_losses]
+        return [r_losses, v_losses, p_losses, s_losses, reg_losses]
 
 
 class MuZeroMCTS(MuZeroBase):
