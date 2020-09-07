@@ -15,6 +15,7 @@ class TrainingConfig:
         regularization_learning_rate=0.001,
         batch_size=256,
         iterations=16,
+        max_episodes=200000,
     ):
         self.__dict__.update(locals())
 

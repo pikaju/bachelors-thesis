@@ -42,7 +42,7 @@ def run_env(config_generator: Callable[[int], Config]):
     optimizer = tf.optimizers.Adam(lambda: config.training.learning_rate)
 
     episode = 0
-    while True:
+    while episode < config.training.max_episodes:
         obs_t = env.reset()
         replay_candidate = []
         step = 0
@@ -150,31 +150,35 @@ def run_env(config_generator: Callable[[int], Config]):
 
 
 def test():
-    def generate_config(episode: int):
-        return Config(
-            summary_directory='./logs/with_0.4/test2',
-            environment_name='CartPole-v1',
-            discount_factor=0.97,
-            render=False,
-            training=TrainingConfig(
-                reward_factor=1.0,
-                learning_rate=0.002 * 0.99 ** episode,
-                state_learning_rate=1.0,
-                batch_size=512,
-                iterations=32,
-            ),
-            replay_buffer=ReplayBufferConfig(
-                size=8192,
-            ),
-            model=ModelConfig(
-                state_size=16,
-            ),
-            muzero=MuZeroConfig(
-                num_simulations=16,
-                temperature=1.0 * 0.99 ** episode,
-            ),
-        )
-    run_env(generate_config)
+    for test in range(256):
+        for run in [0.0, 0.5, 1.0]:
+            def generate_config(episode: int):
+                import datetime
+                return Config(
+                    summary_directory='./logs/state_lr_{}/test{}'.format(run, test),
+                    environment_name='CartPole-v1',
+                    discount_factor=0.97,
+                    render=False,
+                    training=TrainingConfig(
+                        reward_factor=1.0,
+                        learning_rate=0.002 * 0.99 ** episode,
+                        state_learning_rate=run,
+                        batch_size=512,
+                        iterations=32,
+                        max_episodes=256,
+                    ),
+                    replay_buffer=ReplayBufferConfig(
+                        size=2048,
+                    ),
+                    model=ModelConfig(
+                        state_size=16,
+                    ),
+                    muzero=MuZeroConfig(
+                        num_simulations=16,
+                        temperature=1.0 * 0.99 ** episode,
+                    ),
+                )
+            run_env(generate_config)
 
 
 def main():
