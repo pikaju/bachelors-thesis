@@ -21,6 +21,7 @@
 \usepackage{titling}
 \usepackage{float}
 \usepackage{cite}
+\usepackage[mathscr]{eucal}
 
 %tikz
 \usepackage{tikz}
@@ -36,38 +37,18 @@
 
 \tableofcontents
 
-\section{Introduction}
-\subsection{Artificial Intelligence in Robotics}
-\subsection{Current issues with AI}
-
-\section{Reinforcement learning}
-\subsection{Markov Decision Process}
-\subsection{Reward Functions}
-\subsection{Value Iteration}
-\subsection{Policy Iteration}
-\subsection{Model-based Reinforcement Learning}
-
-\section{Neural Networks}
-\subsection{LSTM Networks}
-\subsection{Convolution Neural Networks}
-\subsection{Deep-Q-Learning}
-\subsection{Multi-head Neural Networks}
-
-\section{Prior work}
-\subsection{MuZero Algorithm}
-\subsection{Asynchronous Advantage Actor-Critic}
-\subsection{Random Network Distillation}
-\subsection{Particle Swarm Optimization}
+\input{src/introduction}
+\input{src/background/background}
 
 \section{Proposal}
-\subsection{Continuous MuZero}
-\subsection{Intrinsic rewards}
 
 \section{Experiments}
+\subsection{Environments}
+\subsection{Setup}
+\subsection{Results}
+\subsection{Discussion}
 
-\section{Results}
-
-\section{Discussion}
+\section{Conclusion}
 
 \bibliography{bibliography}
 \bibliographystyle{plain}
