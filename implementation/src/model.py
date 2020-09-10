@@ -85,6 +85,21 @@ class Model:
             )
         ], name='prediction_value')
 
+        self.generation_path = tf.keras.Sequential([
+            tf.keras.layers.Dense(
+                math.ceil(
+                    (observation_space.shape[0] + config.state_size) / 2.0),
+                activation=config.activation,
+                input_shape=[config.state_size],
+                kernel_initializer='he_normal',
+            ),
+            tf.keras.layers.Dense(
+                observation_space.shape[0],
+                activation=config.activation,
+                kernel_initializer='he_normal',
+            ),
+        ], name='generation')
+
     @tf.function
     def _scale_state(self, state):
         state_min = tf.reduce_min(state, -1, True)
@@ -126,6 +141,10 @@ class Model:
         return (policy, value)
 
     @tf.function
+    def generation(self, state):
+        return self.generation_path(state)
+
+    @tf.function
     def action_sampler(self, policy):
         if isinstance(self.action_space, gym.spaces.Discrete):
             return tf.random.categorical(policy, num_samples=1)[:, 0]
@@ -158,6 +177,10 @@ class Model:
 
     @tf.function
     def loss_state(self, true, pred):
+        return tf.losses.MSE(true, pred)
+
+    @tf.function
+    def loss_generation(self, true, pred):
         return tf.losses.MSE(true, pred)
 
     @tf.function

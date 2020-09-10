@@ -13,10 +13,11 @@ def scale_gradient(tensor):
 
 
 class MuZeroBase:
-    def __init__(self, representation, dynamics, prediction):
+    def __init__(self, representation, dynamics, prediction, generation):
         self.representation = representation
         self.dynamics = dynamics
         self.prediction = prediction
+        self.generation = generation
 
     @tf.function
     def predict(self, obs, actions):
@@ -38,19 +39,21 @@ class MuZeroBase:
         loss_v,
         loss_p,
         loss_s,
+        loss_g,
         regularization,
     ):
         unroll_steps = obses.shape[0]
         batch_size = obses.shape[1]
 
-        r_losses, v_losses, p_losses, s_losses, reg_losses = [
-            tf.zeros([batch_size]) for _ in range(5)]
+        r_losses, v_losses, p_losses, s_losses, g_losses, reg_losses = [
+            tf.zeros([batch_size]) for _ in range(6)]
         state = self.representation(obses[0])
 
         for i in tf.range(unroll_steps):
             # Get model predictions.
             policy, value = self.prediction(state)
             reward, state = self.dynamics(scale_gradient(state), actions[i])
+            observation = self.generation(state)
 
             true_state = tf.stop_gradient(self.representation(obses_tp1[i]))
 
@@ -58,15 +61,16 @@ class MuZeroBase:
             v_losses += loss_v(zs[i], value) / unroll_steps
             p_losses += loss_p(actions[i], policy) / unroll_steps
             s_losses += loss_s(true_state, state) / unroll_steps
+            g_losses += loss_g(obses_tp1[i], observation) / unroll_steps
             reg_losses += tf.repeat(regularization(),
                                     repeats=[batch_size]) / unroll_steps
 
-        return [r_losses, v_losses, p_losses, s_losses, reg_losses]
+        return [r_losses, v_losses, p_losses, s_losses, g_losses, reg_losses]
 
 
 class MuZeroMCTS(MuZeroBase):
-    def __init__(self, representation, dynamics, prediction):
-        super().__init__(representation, dynamics, prediction)
+    def __init__(self, representation, dynamics, prediction, generation):
+        super().__init__(representation, dynamics, prediction, generation)
 
     def plan(
         self,
@@ -116,8 +120,8 @@ class MuZeroMCTS(MuZeroBase):
 
 
 class MuZeroPSO(MuZeroBase):
-    def __init__(self, representation, dynamics, prediction):
-        super().__init__(representation, dynamics, prediction)
+    def __init__(self, representation, dynamics, prediction, generation):
+        super().__init__(representation, dynamics, prediction, generation)
 
     @tf.function
     def plan(

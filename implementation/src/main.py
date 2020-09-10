@@ -37,7 +37,7 @@ def run_env(config_generator: Callable[[int], Config]):
 
     replay_buffer = PrioritizedReplayBuffer(config.replay_buffer)
     model = Model(config.model, env.observation_space, env.action_space)
-    muzero = MuZeroMCTS(model.representation, model.dynamics, model.prediction)
+    muzero = MuZeroMCTS(model.representation, model.dynamics, model.prediction, model.generation)
 
     optimizer = tf.optimizers.Adam(lambda: config.training.learning_rate)
 
@@ -116,6 +116,7 @@ def run_env(config_generator: Callable[[int], Config]):
                     model.loss_value,
                     model.loss_policy,
                     model.loss_state,
+                    model.loss_generation,
                     model.loss_regularization,
                 )
                 learning_rates = [
@@ -123,6 +124,7 @@ def run_env(config_generator: Callable[[int], Config]):
                     config.training.value_learning_rate,
                     config.training.policy_learning_rate,
                     config.training.state_learning_rate,
+                    config.training.generation_learning_rate,
                     config.training.regularization_learning_rate,
                 ]
                 weighted_losses = []
@@ -142,8 +144,9 @@ def run_env(config_generator: Callable[[int], Config]):
                 tf.summary.scalar('loss/value', wl[1], step=episode)
                 tf.summary.scalar('loss/policy', wl[2], step=episode)
                 tf.summary.scalar('loss/state', wl[3], step=episode)
+                tf.summary.scalar('loss/generation', wl[4], step=episode)
                 tf.summary.scalar('loss/regularization',
-                                  wl[3], step=episode)
+                                  wl[5], step=episode)
 
         episode += 1
         config = config_generator(episode)
@@ -155,14 +158,14 @@ def test():
             def generate_config(episode: int):
                 import datetime
                 return Config(
-                    summary_directory='./logs/state_lr_{}/test{}'.format(run, test),
+                    summary_directory='./logs/generation_lr_{}/test{}'.format(run, test),
                     environment_name='CartPole-v1',
                     discount_factor=0.97,
                     render=False,
                     training=TrainingConfig(
                         reward_factor=1.0,
                         learning_rate=0.002 * 0.99 ** episode,
-                        state_learning_rate=run,
+                        generation_learning_rate=run,
                         batch_size=512,
                         iterations=32,
                         max_episodes=256,
