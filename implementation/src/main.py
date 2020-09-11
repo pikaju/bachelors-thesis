@@ -152,36 +152,41 @@ def run_env(config_generator: Callable[[int], Config]):
         config = config_generator(episode)
 
 
+def perform_run(test, run):
+    def generate_config(episode: int):
+        import datetime
+        return Config(
+            summary_directory='./logs/generation_lr_{}/test{}'.format(run, test),
+            environment_name='CartPole-v1',
+            discount_factor=0.97,
+            render=False,
+            training=TrainingConfig(
+                reward_factor=1.0,
+                learning_rate=0.002 * 0.99 ** episode,
+                generation_learning_rate=run,
+                batch_size=512,
+                iterations=32,
+                max_episodes=256,
+            ),
+            replay_buffer=ReplayBufferConfig(
+                size=2048,
+            ),
+            model=ModelConfig(
+                state_size=16,
+            ),
+            muzero=MuZeroConfig(
+                num_simulations=16,
+                temperature=1.0 * 0.99 ** episode,
+            ),
+        )
+    run_env(generate_config)
+
+
 def test():
+    from multiprocessing import Pool
+    pool = Pool(3)
     for test in range(256):
-        for run in [0.0, 0.5, 1.0]:
-            def generate_config(episode: int):
-                import datetime
-                return Config(
-                    summary_directory='./logs/generation_lr_{}/test{}'.format(run, test),
-                    environment_name='CartPole-v1',
-                    discount_factor=0.97,
-                    render=False,
-                    training=TrainingConfig(
-                        reward_factor=1.0,
-                        learning_rate=0.002 * 0.99 ** episode,
-                        generation_learning_rate=run,
-                        batch_size=512,
-                        iterations=32,
-                        max_episodes=256,
-                    ),
-                    replay_buffer=ReplayBufferConfig(
-                        size=2048,
-                    ),
-                    model=ModelConfig(
-                        state_size=16,
-                    ),
-                    muzero=MuZeroConfig(
-                        num_simulations=16,
-                        temperature=1.0 * 0.99 ** episode,
-                    ),
-                )
-            run_env(generate_config)
+        pool.starmap(perform_run, ((test, run) for run in [0.0, 0.5, 1.0]))
 
 
 def main():
