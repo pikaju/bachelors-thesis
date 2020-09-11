@@ -22,6 +22,8 @@ In Markov Decision Processes, the agent-environment interaction only occurs on d
     \label{fig:mdp_visualization}
 \end{figure}
 
+In a \textit{finite Markov Decision Process}, the sets of states $\mathscr{S}$, actions $\mathscr{A}(s) : \forall s \in \mathscr{S}$ and rewards $\mathscr{R}$ are all finite. With this constraint, we can use the function $p : \mathscr{S} \times \mathscr{R} \times \mathscr{S} \times \mathscr{A} \mapsto \left[0, 1\right]$ to denote probabilities of state transitions occuring. For example, $p\left(s', r \given s, a\right)$ refers to the probability of seeing state $s'$ and receiving reward $r$ after taking action $a$ in state $s$. This implies that transition probabilities are only dependant on the current state and action, not on past information. \cite{sutton}
+
 An agent should not focus solely on choosing the action $A_t$ which results in the highest \textit{immediate reward} $R_{t+1}$. Instead, future rewards should also be taken into consideration. Formally, we define the \textit{return}, which is the sum of all rewards at subsequent timesteps until the final timestep $T$.
 \begin{equation*}
     G_t = R_{t+1} + R_{t+2} + R_{t+3} + ... + R_T
