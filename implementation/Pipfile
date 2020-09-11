@@ -8,9 +8,9 @@ pylint = "*"
 autopep8 = "*"
 
 [packages]
-tensorflow = "*"
-gym = {extras = ["all"],version = "*"}
+tensorflow = "2.3.02"
+gym = {extras = ["classic_control", "box2d"],version = "*"}
 baselines = {editable = true,git = "https://github.com/openai/baselines",ref = "tf2"}
 
 [requires]
-python_version = "3.8"
+python_version = "3"
