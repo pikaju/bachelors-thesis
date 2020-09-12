@@ -5,9 +5,10 @@ ax = plt.gca()
 
 for run in ['generation_lr_0.0', 'generation_lr_0.5', 'generation_lr_1.0']:
     frame = pd.DataFrame()
-    for test in range(6):
+    for test in range(0, 38):
         url = 'http://localhost:6006/data/plugin/scalars/scalars?tag=reward%2Ftotal&run={}%2Ftest{}&format=csv'.format(
             run, test)
+        print(url)
         data = pd.read_csv(url)
         frame = pd.concat([frame, data])
     frame = frame.groupby(frame.index).mean()
