@@ -1,0 +1,16 @@
+\subsubsection{Actor-Critic Methods}
+\textit{Actor-critic} methods \cite{bible} try to combine policy- and value-based to exploit strengths and mitigate weaknesses of the two parts. The term comes from the way an agent performs actions in the environment using the policy (actor) component, and then judges itself using the value (critic) component.
+
+A common approach is to use the state-value function estimate $v$ as a baseline for the policy gradient:
+\begin{equation*}
+    \nabla_\theta \log \pi_\theta\left(A_t \given S_t\right) \left(G_t - v_\pi(S_t)\right)
+\end{equation*}
+We can replace the actual return $G_t$ with expect return produced by the action-value function $q_\pi(s, a) = \mathbb{E}_\pi \left[G_t \given S_t = s, A_t = a\right]$:
+\begin{equation*}
+    \nabla_\theta \log \pi_\theta\left(A_t \given S_t\right) \left(q(S_t, A_t) - v_\pi(S_t)\right)
+\end{equation*}
+Note that the term $q(S_t, A_t) - v_\pi(S_t)$ is merely the difference in value between state $S_t$ and the subsequent state $S_{t+1}$ after taking action $A_t$. Using only a value estimate $V$ of $v_\pi$, this can also be described as $R_{t+1} + \gamma V(S_{t+1}) - V(S_t)$ \cite{a3c}. We call this difference the \textit{advantage} of taking action $A_t$ in state $S_t$.
+
+Less formally, the advantage policy gradient can be thought of as increasing the probability of an action whenever the critic is positively surprised by the resulting state, and vice-versa.
+
+Updates can be performed online as in Q-learning, and similarly to the regular REINFORCE policy gradient, actions must not be discrete. We can see how actor-critics leverage the strengths of both approaches.
