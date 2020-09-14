@@ -288,6 +288,7 @@ class MCTS:
                 reward,
                 policy_logits,
                 hidden_state,
+                _,  # Reconstructed observation
             ) = model.initial_inference(observation)
             root_predicted_value = models.support_to_scalar(
                 root_predicted_value, self.config.support_size
@@ -332,7 +333,7 @@ class MCTS:
             # Inside the search tree we use the dynamics function to obtain the next hidden
             # state given an action and the previous hidden state
             parent = search_path[-2]
-            value, reward, policy_logits, hidden_state = model.recurrent_inference(
+            value, reward, policy_logits, hidden_state, _ = model.recurrent_inference(
                 parent.hidden_state,
                 torch.tensor([[action]]).to(parent.hidden_state.device),
             )
