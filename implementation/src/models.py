@@ -16,6 +16,7 @@ class MuZeroNetwork:
                 config.fc_value_layers,
                 config.fc_policy_layers,
                 config.fc_representation_layers,
+                config.fc_reconstruction_layers,
                 config.fc_dynamics_layers,
                 config.support_size,
             )
@@ -88,6 +89,7 @@ class MuZeroFullyConnectedNetwork(AbstractNetwork):
         fc_value_layers,
         fc_policy_layers,
         fc_representation_layers,
+        fc_reconstruction_layers,
         fc_dynamics_layers,
         support_size,
     ):
@@ -104,6 +106,18 @@ class MuZeroFullyConnectedNetwork(AbstractNetwork):
                 + stacked_observations * observation_shape[1] * observation_shape[2],
                 fc_representation_layers,
                 encoding_size,
+            )
+        )
+
+        self.reconstruction_network = torch.nn.DataParallel(
+            mlp(
+                encoding_size,
+                fc_reconstruction_layers,
+                observation_shape[0]
+                * observation_shape[1]
+                * observation_shape[2]
+                * (stacked_observations + 1)
+                + stacked_observations * observation_shape[1] * observation_shape[2],
             )
         )
 
@@ -143,6 +157,9 @@ class MuZeroFullyConnectedNetwork(AbstractNetwork):
             encoded_state - min_encoded_state
         ) / scale_encoded_state
         return encoded_state_normalized
+
+    def reconstruction(self, encoded_state):
+        return self.reconstruction_network(encoded_state)
 
     def dynamics(self, encoded_state, action):
         # Stack encoded_state with a game specific one hot encoded action (See paper appendix Network Architecture)
