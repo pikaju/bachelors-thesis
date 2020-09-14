@@ -147,7 +147,7 @@ class Trainer:
         target_reward = torch.tensor(target_reward).float().to(device)
         target_policy = torch.tensor(target_policy).float().to(device)
         gradient_scale_batch = torch.tensor(gradient_scale_batch).float().to(device)
-        # observation_batch: batch, channels, height, width
+        # observation_batch: batch, num_unroll_steps+1, channels, height, width
         # action_batch: batch, num_unroll_steps+1, 1 (unsqueeze)
         # target_value: batch, num_unroll_steps+1
         # target_reward: batch, num_unroll_steps+1
@@ -161,9 +161,9 @@ class Trainer:
         # target_value: batch, num_unroll_steps+1, 2*support_size+1
         # target_reward: batch, num_unroll_steps+1, 2*support_size+1
 
-        ## Generate predictions
+        # Generate predictions
         value, reward, policy_logits, hidden_state = self.model.initial_inference(
-            observation_batch
+            observation_batch[:, 0].squeeze(1)
         )
         predictions = [(value, reward, policy_logits)]
         for i in range(1, action_batch.shape[1]):
@@ -175,7 +175,7 @@ class Trainer:
             predictions.append((value, reward, policy_logits))
         # predictions: num_unroll_steps+1, 3, batch, 2*support_size+1 | 2*support_size+1 | 9 (according to the 2nd dim)
 
-        ## Compute losses
+        # Compute losses
         value_loss, reward_loss, policy_loss = (0, 0, 0)
         value, reward, policy_logits = predictions[0]
         # Ignore reward loss for the first batch step
