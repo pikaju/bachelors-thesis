@@ -75,6 +75,7 @@ class Trainer:
                 value_loss,
                 reward_loss,
                 policy_loss,
+                reconstruction_loss,
             ) = self.update_weights(batch)
 
             if self.config.PER:
@@ -101,6 +102,7 @@ class Trainer:
                     "value_loss": value_loss,
                     "reward_loss": reward_loss,
                     "policy_loss": policy_loss,
+                    "reconstruction_loss": reconstruction_loss,
                 }
             )
 
@@ -162,33 +164,36 @@ class Trainer:
         # target_reward: batch, num_unroll_steps+1, 2*support_size+1
 
         # Generate predictions
-        value, reward, policy_logits, hidden_state = self.model.initial_inference(
+        value, reward, policy_logits, hidden_state, reconstruction = self.model.initial_inference(
             observation_batch[:, 0].squeeze(1)
         )
-        predictions = [(value, reward, policy_logits)]
+        predictions = [(value, reward, policy_logits, reconstruction)]
         for i in range(1, action_batch.shape[1]):
-            value, reward, policy_logits, hidden_state = self.model.recurrent_inference(
+            value, reward, policy_logits, hidden_state, reconstruction = self.model.recurrent_inference(
                 hidden_state, action_batch[:, i]
             )
             # Scale the gradient at the start of the dynamics function (See paper appendix Training)
             hidden_state.register_hook(lambda grad: grad * 0.5)
-            predictions.append((value, reward, policy_logits))
+            predictions.append((value, reward, policy_logits, reconstruction))
         # predictions: num_unroll_steps+1, 3, batch, 2*support_size+1 | 2*support_size+1 | 9 (according to the 2nd dim)
 
         # Compute losses
-        value_loss, reward_loss, policy_loss = (0, 0, 0)
-        value, reward, policy_logits = predictions[0]
+        value_loss, reward_loss, policy_loss, reconstruction_loss, consistency_loss = (0, 0, 0, 0, 0)
+        value, reward, policy_logits, reconstruction = predictions[0]
         # Ignore reward loss for the first batch step
-        current_value_loss, _, current_policy_loss = self.loss_function(
+        current_value_loss, _, current_policy_loss, current_reconstruction_loss = self.loss_function(
             value.squeeze(-1),
             reward.squeeze(-1),
             policy_logits,
+            reconstruction,
             target_value[:, 0],
             target_reward[:, 0],
             target_policy[:, 0],
+            observation_batch[:, 0],
         )
         value_loss += current_value_loss
         policy_loss += current_policy_loss
+        reconstruction_loss += current_reconstruction_loss
         # Compute priorities for the prioritized replay (See paper appendix Training)
         pred_value_scalar = (
             models.support_to_scalar(value, self.config.support_size)
@@ -203,18 +208,21 @@ class Trainer:
         )
 
         for i in range(1, len(predictions)):
-            value, reward, policy_logits = predictions[i]
+            value, reward, policy_logits, reconstruction = predictions[i]
             (
                 current_value_loss,
                 current_reward_loss,
                 current_policy_loss,
+                current_reconstruction_loss,
             ) = self.loss_function(
                 value.squeeze(-1),
                 reward.squeeze(-1),
                 policy_logits,
+                reconstruction,
                 target_value[:, i],
                 target_reward[:, i],
                 target_policy[:, i],
+                observation_batch[:, i],
             )
 
             # Scale gradient by the number of unroll steps (See paper appendix Training)
@@ -227,10 +235,14 @@ class Trainer:
             current_policy_loss.register_hook(
                 lambda grad: grad / gradient_scale_batch[:, i]
             )
+            current_reconstruction_loss.register_hook(
+                lambda grad: grad / gradient_scale_batch[:, i]
+            )
 
             value_loss += current_value_loss
             reward_loss += current_reward_loss
             policy_loss += current_policy_loss
+            reconstruction_loss += current_reconstruction_loss
 
             # Compute priorities for the prioritized replay (See paper appendix Training)
             pred_value_scalar = (
@@ -246,7 +258,8 @@ class Trainer:
             )
 
         # Scale the value loss, paper recommends by 0.25 (See paper appendix Reanalyze)
-        loss = value_loss * self.config.value_loss_weight + reward_loss + policy_loss
+        loss = value_loss * self.config.value_loss_weight + reward_loss + \
+            policy_loss + reconstruction_loss * self.config.reconstruction_loss_weight
         if self.config.PER:
             # Correct PER bias by using importance-sampling (IS) weights
             loss *= weight_batch
@@ -266,6 +279,7 @@ class Trainer:
             value_loss.mean().item(),
             reward_loss.mean().item(),
             policy_loss.mean().item(),
+            reconstruction_loss.mean().item(),
         )
 
     def update_lr(self):
@@ -280,7 +294,14 @@ class Trainer:
 
     @staticmethod
     def loss_function(
-        value, reward, policy_logits, target_value, target_reward, target_policy,
+        value,
+        reward,
+        policy_logits,
+        reconstruction,
+        target_value,
+        target_reward,
+        target_policy,
+        target_observation,
     ):
         # Cross-entropy seems to have a better convergence than MSE
         value_loss = (-target_value * torch.nn.LogSoftmax(dim=1)(value)).sum(1)
@@ -288,4 +309,5 @@ class Trainer:
         policy_loss = (-target_policy * torch.nn.LogSoftmax(dim=1)(policy_logits)).sum(
             1
         )
-        return value_loss, reward_loss, policy_loss
+        reconstruction_loss = torch.square(reconstruction - target_observation).flatten(start_dim=1).mean(1)
+        return value_loss, reward_loss, policy_loss, reconstruction_loss

@@ -94,6 +94,8 @@ class MuZeroFullyConnectedNetwork(AbstractNetwork):
         support_size,
     ):
         super().__init__()
+        self.observation_shape = observation_shape
+        self.stacked_observations = stacked_observations
         self.action_space_size = action_space_size
         self.full_support_size = 2 * support_size + 1
 
@@ -159,7 +161,8 @@ class MuZeroFullyConnectedNetwork(AbstractNetwork):
         return encoded_state_normalized
 
     def reconstruction(self, encoded_state):
-        return self.reconstruction_network(encoded_state)
+        reconstructed_observation = self.reconstruction_network(encoded_state)
+        return reconstructed_observation.view(-1, *self.observation_shape)
 
     def dynamics(self, encoded_state, action):
         # Stack encoded_state with a game specific one hot encoded action (See paper appendix Network Architecture)
@@ -188,6 +191,7 @@ class MuZeroFullyConnectedNetwork(AbstractNetwork):
 
     def initial_inference(self, observation):
         encoded_state = self.representation(observation)
+        reconstructed_observation = self.reconstruction(encoded_state)
         policy_logits, value = self.prediction(encoded_state)
         # reward equal to 0 for consistency
         reward = torch.log(
@@ -204,12 +208,14 @@ class MuZeroFullyConnectedNetwork(AbstractNetwork):
             reward,
             policy_logits,
             encoded_state,
+            reconstructed_observation,
         )
 
     def recurrent_inference(self, encoded_state, action):
         next_encoded_state, reward = self.dynamics(encoded_state, action)
+        next_reconstruction = self.reconstruction(encoded_state)
         policy_logits, value = self.prediction(next_encoded_state)
-        return value, reward, policy_logits, next_encoded_state
+        return value, reward, policy_logits, next_encoded_state, next_reconstruction
 
 
 ###### End Fully Connected #######
@@ -613,6 +619,7 @@ class MuZeroResidualNetwork(AbstractNetwork):
 
     def initial_inference(self, observation):
         encoded_state = self.representation(observation)
+        reconstructed_observation = self.reconstruction(encoded_state)
         policy_logits, value = self.prediction(encoded_state)
         # reward equal to 0 for consistency
         reward = torch.log(
@@ -628,12 +635,14 @@ class MuZeroResidualNetwork(AbstractNetwork):
             reward,
             policy_logits,
             encoded_state,
+            reconstructed_observation,
         )
 
     def recurrent_inference(self, encoded_state, action):
         next_encoded_state, reward = self.dynamics(encoded_state, action)
+        next_reconstruction = self.reconstruction(encoded_state)
         policy_logits, value = self.prediction(next_encoded_state)
-        return value, reward, policy_logits, next_encoded_state
+        return value, reward, policy_logits, next_encoded_state, next_reconstruction
 
 
 ########### End ResNet ###########
