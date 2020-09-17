@@ -11,6 +11,6 @@ We can replace the actual return $G_t$ with expect return produced by the action
 \end{equation*}
 Note that the term $q(S_t, A_t) - v_\pi(S_t)$ is merely the difference in value between state $S_t$ and the subsequent state $S_{t+1}$ after taking action $A_t$. Using only a value estimate $V$ of $v_\pi$, this can also be described as $R_{t+1} + \gamma V(S_{t+1}) - V(S_t)$ \cite{a3c}. We call this difference the \textit{advantage} of taking action $A_t$ in state $S_t$.
 
-Less formally, the advantage policy gradient can be thought of as increasing the probability of an action whenever the critic is positively surprised by the resulting state, and vice-versa.
+Less formally, the advantage policy gradient can be thought of as increasing the probability of an action whenever the critic is positively surprised by the resulting state, and vice versa.
 
 Updates can be performed online as in Q-learning, and similarly to the regular REINFORCE policy gradient, actions must not be discrete. We can see how actor-critics leverage the strengths of both approaches.
