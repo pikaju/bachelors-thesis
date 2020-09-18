@@ -1,0 +1,44 @@
+\subsection{Artificial Neural Networks}
+\textit{Artificial neural networks} (\textit{ANNs}), sometimes referred to as \textit{neural networks} (\textit{NNs}), are a category of bio-inspired algorithms that are structured like and can learn similarly to a brain. They are the foundation to many modern machine learning systems. Early concepts have been developed in 1943 \cite{first-neuron}, but they were not widely applicable due to the lack of computational resources. However, today, even consumer grade graphics cards intended for video games are powerful enough to run complex neural network models and are starting to be engineered specifically to accelerate machine learning applications \cite{tensor-cores}.
+
+At their core, artificial neural networks are function approximators. Say, for example, we want to predict the output of a function $g$ without knowledge of its inner workings. Instead, we are only given several input-output samples produced by $g$. In this case, we may use a neural network, which, given a set of parameters $\theta$, also produces an input-output mapping $f_\theta$ that likely is not similar to $g$ by default. We now iteratively adjust $\theta$ using the input-output samples created by $g$ so that $f_\theta$ also produces (close to) the same outputs. The network is then expected to behave similarly to $g$ for previously unknown inputs.
+
+The fundamental unit of neural network is often the McCulloch-Pitts neuron \cite{first-neuron}. Inspired by biological neurons, McCulloch-Pitts mathematical neurons receive a vector of real-valued inputs $x = (x_1, ..., x_n)$, which are weighted with parameters $w = (w_1, ..., w_n)$ and then summed to produce a single real-valued output. This output is then further transformed by an \textit{activation function} $h$, allowing the neuron to produce non-linear mappings. A \textit{threshold} term or \textit{bias} $b$ is usually introduced as well, creating the equation:
+\begin{equation*}
+    y = h\left(\sum_{i=1}^n w_i x_i + b \right)
+\end{equation*}
+Possible activation functions include \textit{sigmoid}, \textit{tanh} or \textit{ReLU}\footnote{Rectified Linear Unit}. The full neuron can be seen in figure \ref{fig:neuron}.
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+        \node (x1) {$x_1$};
+        \node [below = 0.25 of x1] (x2) {$x_2$};
+        \node [below = 0.25 of x2] (x3) {$x_3$};
+        \node [below = 0.15 of x3] (xdot) {\vdots};
+        \node [below = 0.35 of xdot] (xn) {$x_n$};
+
+        \node [right = of x3, draw, circle] (sum) {$\sum$};
+
+        \node [above = of sum] (bias) {$b$};
+
+        \node [right = 0.5 of sum, draw, rectangle] (activation) {$h$};
+        \node [right = of activation] (y) {$y$};
+
+        \draw [->] (x1) -- (sum);
+        \draw [->] (x2) -- (sum);
+        \draw [->] (x3) -- (sum);
+        \draw [->] (xn) -- (sum);
+
+        \draw [->] (bias) -- (sum);
+
+        \draw [->] (sum) -- (activation);
+        \draw [->] (activation) -- (y);
+    \end{tikzpicture}
+    \caption{A single McCulloch-Pitts neuron.}
+    \label{fig:neuron}
+\end{figure}
+Individual units were later put together to form the \textit{perceptron} \cite{first-perceptron}. Multiple layers of neurons are called \textit{multi-layer perceptron}.
+
+Perceptrons can be trained using gradient descent of an error (or \textit{loss}) term with respect to its parameters $\theta$, which is referred to as \textit{back-propagation} \cite{back-propagation}.
+
+\input{src/background/artificial_neural_networks/deep_reinforcement_learning.tex}
