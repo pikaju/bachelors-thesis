@@ -10,31 +10,38 @@ The fundamental unit of neural network is often the McCulloch-Pitts neuron \cite
 Possible activation functions include \textit{sigmoid}, \textit{tanh} or \textit{ReLU}\footnote{Rectified Linear Unit}. The full neuron can be seen in figure \ref{fig:neuron}.
 \begin{figure}[ht]
     \centering
-    \begin{tikzpicture}
-        \node (x1) {$x_1$};
-        \node [below = 0.25 of x1] (x2) {$x_2$};
-        \node [below = 0.25 of x2] (x3) {$x_3$};
-        \node [below = 0.15 of x3] (xdot) {\vdots};
-        \node [below = 0.35 of xdot] (xn) {$x_n$};
+    \begin{subfigure}{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{assets/bio_neuron.pdf}
+    \end{subfigure}
+    \begin{subfigure}{0.49\textwidth}
+        \centering
+        \begin{tikzpicture}
+            \node (x1) {$x_1$};
+            \node [below = 0.25 of x1] (x2) {$x_2$};
+            \node [below = 0.25 of x2] (x3) {$x_3$};
+            \node [below = 0.15 of x3] (xdot) {\vdots};
+            \node [below = 0.35 of xdot] (xn) {$x_n$};
 
-        \node [right = of x3, draw, circle] (sum) {$\sum$};
+            \node [right = of x3, draw, circle] (sum) {$\sum$};
 
-        \node [above = of sum] (bias) {$b$};
+            \node [above = of sum] (bias) {$b$};
 
-        \node [right = 0.5 of sum, draw, rectangle] (activation) {$h$};
-        \node [right = of activation] (y) {$y$};
+            \node [right = 0.5 of sum, draw, rectangle] (activation) {$h$};
+            \node [right = of activation] (y) {$y$};
 
-        \draw [->] (x1) -- (sum);
-        \draw [->] (x2) -- (sum);
-        \draw [->] (x3) -- (sum);
-        \draw [->] (xn) -- (sum);
+            \draw [->] (x1) -- (sum);
+            \draw [->] (x2) -- (sum);
+            \draw [->] (x3) -- (sum);
+            \draw [->] (xn) -- (sum);
 
-        \draw [->] (bias) -- (sum);
+            \draw [->] (bias) -- (sum);
 
-        \draw [->] (sum) -- (activation);
-        \draw [->] (activation) -- (y);
-    \end{tikzpicture}
-    \caption{A single McCulloch-Pitts neuron.}
+            \draw [->] (sum) -- (activation);
+            \draw [->] (activation) -- (y);
+        \end{tikzpicture}
+    \end{subfigure}
+    \caption{Comparisson of a biological neuron \cite{bio-neuron} (left) and a mathematical McCulloch-Pitts neuron (right).}
     \label{fig:neuron}
 \end{figure}
 Individual units were later put together to form the \textit{perceptron} \cite{first-perceptron}. Multiple layers of neurons are called \textit{multi-layer perceptron}.
