@@ -44,8 +44,8 @@ Possible activation functions include \textit{sigmoid}, \textit{tanh} or \textit
     \caption{Comparisson of a biological neuron \cite{bio-neuron} (left) and a mathematical McCulloch-Pitts neuron (right).}
     \label{fig:neuron}
 \end{figure}
-Individual units were later put together to form the \textit{perceptron} \cite{first-perceptron}. Multiple layers of neurons are called \textit{multi-layer perceptron}.
+Individual units were later put together to form the \textit{perceptron} \cite{first-perceptron}. Multiple layers of neurons are called \textit{multi-layer perceptron}. Having many of such layers popularized the terms \textit{deep neural network} and \textit{deep learning}.
 
-Perceptrons can be trained using gradient descent of an error (or \textit{loss}) term with respect to its parameters $\theta$, which is referred to as \textit{back-propagation} \cite{back-propagation}.
+Perceptrons can be trained using gradient descent of an error (or \textit{loss}) term with respect to its parameters $\theta$, which is referred to as \textit{back-propagation} \cite{back-propagation}. Calculating gradients for each neuron in a complex model is difficult and is required to be highly optimized. Programming libraries such as \textit{TensorFlow} \cite{tensorflow} or \textit{PyTorch} \cite{pytorch} solve this issue by performing automatic differentiation and parallelizing mathematical operations on the GPU.
 
 \input{src/background/artificial_neural_networks/deep_reinforcement_learning.tex}
