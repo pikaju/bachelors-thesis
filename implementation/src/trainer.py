@@ -183,7 +183,7 @@ class Trainer:
         value_loss, reward_loss, policy_loss, reconstruction_loss, consistency_loss = (0, 0, 0, 0, 0)
         value, reward, policy_logits, _, reconstruction = predictions[0]
         # Ignore reward loss for the first batch step
-        current_value_loss, _, current_policy_loss, _, current_reconstruction_loss = self.loss_function(
+        current_value_loss, _, current_policy_loss, current_reconstruction_loss, _ = self.loss_function(
             value.squeeze(-1),
             reward.squeeze(-1),
             policy_logits,
