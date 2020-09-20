@@ -76,6 +76,7 @@ class Trainer:
                 reward_loss,
                 policy_loss,
                 reconstruction_loss,
+                consistency_loss,
             ) = self.update_weights(batch)
 
             if self.config.PER:
@@ -103,6 +104,7 @@ class Trainer:
                     "reward_loss": reward_loss,
                     "policy_loss": policy_loss,
                     "reconstruction_loss": reconstruction_loss,
+                    "consistency_loss": consistency_loss,
                 }
             )
 
@@ -167,29 +169,31 @@ class Trainer:
         value, reward, policy_logits, hidden_state, reconstruction = self.model.initial_inference(
             observation_batch[:, 0].squeeze(1)
         )
-        predictions = [(value, reward, policy_logits, reconstruction)]
+        predictions = [(value, reward, policy_logits, None, reconstruction)]
         for i in range(1, action_batch.shape[1]):
             value, reward, policy_logits, hidden_state, reconstruction = self.model.recurrent_inference(
                 hidden_state, action_batch[:, i]
             )
             # Scale the gradient at the start of the dynamics function (See paper appendix Training)
             hidden_state.register_hook(lambda grad: grad * 0.5)
-            predictions.append((value, reward, policy_logits, reconstruction))
+            predictions.append((value, reward, policy_logits, hidden_state, reconstruction))
         # predictions: num_unroll_steps+1, 3, batch, 2*support_size+1 | 2*support_size+1 | 9 (according to the 2nd dim)
 
         # Compute losses
         value_loss, reward_loss, policy_loss, reconstruction_loss, consistency_loss = (0, 0, 0, 0, 0)
-        value, reward, policy_logits, reconstruction = predictions[0]
+        value, reward, policy_logits, _, reconstruction = predictions[0]
         # Ignore reward loss for the first batch step
-        current_value_loss, _, current_policy_loss, current_reconstruction_loss = self.loss_function(
+        current_value_loss, _, current_policy_loss, _, current_reconstruction_loss = self.loss_function(
             value.squeeze(-1),
             reward.squeeze(-1),
             policy_logits,
             reconstruction,
+            None,
             target_value[:, 0],
             target_reward[:, 0],
             target_policy[:, 0],
             observation_batch[:, 0],
+            None,
         )
         value_loss += current_value_loss
         policy_loss += current_policy_loss
@@ -208,21 +212,27 @@ class Trainer:
         )
 
         for i in range(1, len(predictions)):
-            value, reward, policy_logits, reconstruction = predictions[i]
+            target_hidden_state = self.model.representation(
+                observation_batch[:, i].squeeze(1)
+            ).detach()
+            value, reward, policy_logits, hidden_state, reconstruction = predictions[i]
             (
                 current_value_loss,
                 current_reward_loss,
                 current_policy_loss,
                 current_reconstruction_loss,
+                current_consistency_loss,
             ) = self.loss_function(
                 value.squeeze(-1),
                 reward.squeeze(-1),
                 policy_logits,
                 reconstruction,
+                hidden_state,
                 target_value[:, i],
                 target_reward[:, i],
                 target_policy[:, i],
                 observation_batch[:, i],
+                target_hidden_state,
             )
 
             # Scale gradient by the number of unroll steps (See paper appendix Training)
@@ -238,11 +248,15 @@ class Trainer:
             current_reconstruction_loss.register_hook(
                 lambda grad: grad / gradient_scale_batch[:, i]
             )
+            current_consistency_loss.register_hook(
+                lambda grad: grad / gradient_scale_batch[:, i]
+            )
 
             value_loss += current_value_loss
             reward_loss += current_reward_loss
             policy_loss += current_policy_loss
             reconstruction_loss += current_reconstruction_loss
+            consistency_loss += current_consistency_loss
 
             # Compute priorities for the prioritized replay (See paper appendix Training)
             pred_value_scalar = (
@@ -258,8 +272,11 @@ class Trainer:
             )
 
         # Scale the value loss, paper recommends by 0.25 (See paper appendix Reanalyze)
-        loss = value_loss * self.config.value_loss_weight + reward_loss + \
-            policy_loss + reconstruction_loss * self.config.reconstruction_loss_weight
+        loss = (value_loss * self.config.value_loss_weight
+                + reward_loss
+                + policy_loss
+                + reconstruction_loss * self.config.reconstruction_loss_weight
+                + consistency_loss * self.config.consistency_loss_weight)
         if self.config.PER:
             # Correct PER bias by using importance-sampling (IS) weights
             loss *= weight_batch
@@ -280,6 +297,7 @@ class Trainer:
             reward_loss.mean().item(),
             policy_loss.mean().item(),
             reconstruction_loss.mean().item(),
+            consistency_loss.mean().item(),
         )
 
     def update_lr(self):
@@ -298,10 +316,12 @@ class Trainer:
         reward,
         policy_logits,
         reconstruction,
+        hidden_state,
         target_value,
         target_reward,
         target_policy,
         target_observation,
+        target_hidden_state,
     ):
         # Cross-entropy seems to have a better convergence than MSE
         value_loss = (-target_value * torch.nn.LogSoftmax(dim=1)(value)).sum(1)
@@ -310,4 +330,7 @@ class Trainer:
             1
         )
         reconstruction_loss = torch.square(reconstruction - target_observation).flatten(start_dim=1).mean(1)
-        return value_loss, reward_loss, policy_loss, reconstruction_loss
+        consistency_loss = None
+        if hidden_state != None and target_hidden_state != None:
+            consistency_loss = torch.square(hidden_state - target_hidden_state).flatten(start_dim=1).mean(1)
+        return value_loss, reward_loss, policy_loss, reconstruction_loss, consistency_loss

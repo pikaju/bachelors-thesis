@@ -93,6 +93,7 @@ class MuZeroConfig:
         # Scale the value loss to avoid overfitting of the value function, paper recommends 0.25 (See paper appendix Reanalyze)
         self.value_loss_weight = 1
         self.reconstruction_loss_weight = 0.5
+        self.consistency_loss_weight = 0.5
         self.train_on_gpu = True if torch.cuda.is_available() else False  # Train on GPU if available
 
         self.optimizer = "Adam"  # "Adam" or "SGD". Paper uses SGD
