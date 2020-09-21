@@ -1,0 +1,52 @@
+\subsection{Model-Based Reinforcement Learning}
+An environment \textit{model} refers to any means with which an agent is able to predict, to any extent, the behavior of the real environment \cite{bible}. As opposed to their counterpart, \textit{model-free} agents, agents belonging to the \textit{model-based reinforcement learning} class can use their knowledge to plan ahead and, for example, prevent catastrophic, irreversible actions.
+
+A simple example of an environment model is a function $f : \mathscr{S} \times \mathscr{A} \mapsto \mathscr{S} \times \mathscr{R}$ which maps any state and action to a predicted subsequent state as well as a predicted reward for the transition. Note that, in a stochastic environment, this model cannot always be accurate. However, stochastic models are more difficult to create. Given $f$, an agent could take the current environment state or observation and recursively apply $f$ using different action sequences to find favorable trajectories (see figure \ref{fig:recursive_model}).
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}[node distance=0.75]
+        \node (St) {$S_t$};
+
+        \node [right = of St, draw, rectangle] (f1) {$f$};
+        \node [above = of f1] (At) {$\hat{A}_t$};
+        \node [below = of f1] (Rtp1) {$\hat{R}_{t+1}$};
+
+        \node [right = of f1] (Stp1) {$\hat{S}_{t+1}$};
+
+        \node [right = of Stp1, draw, rectangle] (f2) {$f$};
+        \node [above = of f2] (Atp1) {$\hat{A}_{t+1}$};
+        \node [below = of f2] (Rtp2) {$\hat{R}_{t+2}$};
+
+        \node [right = of f2] (Stp2) {$\hat{S}_{t+2}$};
+
+        \node [right = of Stp2] (dots) {$\dots$};
+
+        \node [right = of dots, draw, rectangle] (f3) {$f$};
+        \node [above = of f3] (Atpnm1) {$\hat{A}_{t+n-1}$};
+        \node [below = of f3] (Rtpn) {$\hat{R}_{t+n}$};
+
+        \node [right = of f3] (Stpn) {$\hat{S}_{t+n}$};
+
+        \draw [->] (St) -- (f1);
+        \draw [->] (At) -- (f1);
+        \draw [->] (f1) -- (Rtp1);
+        \draw [->] (f1) -- (Stp1);
+
+        \draw [->] (Stp1) -- (f2);
+        \draw [->] (Atp1) -- (f2);
+        \draw [->] (f2) -- (Rtp2);
+        \draw [->] (f2) -- (Stp2);
+
+        \draw [->] (Stp2) -- (dots);
+        \draw [->] (dots) -- (f3);
+
+        \draw [->] (Atpnm1) -- (f3);
+        \draw [->] (f3) -- (Rtpn);
+        \draw [->] (f3) -- (Stpn);
+
+    \end{tikzpicture}
+    \caption{An environment model $f : \mathscr{S} \times \mathscr{A} \mapsto \mathscr{S} \times \mathscr{R}$ being applied recursively to predict the outcome of a trajectory. $S_t$ is the current environment state, $\hat{A}_t, ..., \hat{A}_{t+n-1}$ is a sequence of actions, $\hat{S}_{t+1}, ..., \hat{S}_{t+n}$ and $\hat{R}_{t+1}, ..., \hat{R}_{t+n}$ are the predicted state and rewards, respectively.}
+    \label{fig:recursive_model}
+\end{figure}
+
+For some environments, it is possible to provide the agent with a perfect model. As an example, a board game like chess has clearly defined rules which can easily be used for planning. Usually, we are not given such rules, meaning the model must also be learned. Neural networks can be trained to predict environment behavior by providing examples of previously observed transitions. Note than an environment model should be able to predict transitions regardless of which action is chosen, meaning it can even be trained using recordings by a random agent. This often makes model-based reinforcement learning algorithms relatively sample efficient.
