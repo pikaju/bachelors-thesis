@@ -5,7 +5,7 @@ ax = plt.gca()
 
 for run in ['lr0.5', 'lr1.0']:
     frame = pd.DataFrame()
-    for test in range(0, 12):
+    for test in range(0, 19):
         url = 'http://0.0.0.0:6006/data/plugin/scalars/scalars?tag=1.Total+reward%2F1.Total+reward&run={}%2Frun{}&format=csv'.format(
             run, test)
         print(url)
