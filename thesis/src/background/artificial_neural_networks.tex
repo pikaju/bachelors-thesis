@@ -51,5 +51,3 @@ Individual units were later put together to form the \textit{perceptron} \cite{f
 where $W_1, \dots, W_n$ are weight matrices, $b_1, \dots, b_n$ are bias vectors and $h_1, \dots, h_n$ are activation functions for each layer. The input vector $x$ is mapped to another vector $f(x)$, which may have a different number of dimensions.
 
 Perceptrons can be trained using gradient descent of an error (or \textit{loss}) term with respect to its parameters $\theta$, which is referred to as \textit{back-propagation} \cite{back-propagation}. Calculating gradients for each neuron in a complex model is difficult and is required to be highly optimized. Programming libraries such as \textit{TensorFlow} \cite{tensorflow} or \textit{PyTorch} \cite{pytorch} solve this issue by performing automatic differentiation and parallelizing mathematical operations on the GPU.
-
-\input{src/background/artificial_neural_networks/deep_reinforcement_learning.tex}
