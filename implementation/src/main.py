@@ -9,9 +9,9 @@ def config_generator():
     for run in range(256):
         for param in [0.0, 0.5, 1.0]:
             config = {
-                "game_name": "cartpole",
-                "reconstruction_loss_weight": 0,
-                "consistency_loss_weight": 1.0,
+                "game_name": "breakout",
+                "reconstruction_loss_weight": param,
+                "consistency_loss_weight": 0.0,
                 "results_path": os.path.join("logs", "lr{}".format(param), "run{}".format(run)),
             }
             yield config

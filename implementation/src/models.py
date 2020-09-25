@@ -320,6 +320,34 @@ class DownsampleCNN(torch.nn.Module):
         return x
 
 
+class UpSample(torch.nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super().__init__()
+        mid_channels = (in_channels + out_channels) // 2
+        self.features = torch.nn.Sequential(
+            torch.nn.ConvTranspose2d(
+                in_channels, mid_channels, kernel_size=5, stride=2, padding=2, output_padding=1
+            ),
+            torch.nn.ReLU(),
+            torch.nn.ConvTranspose2d(
+                mid_channels, mid_channels, kernel_size=5, stride=2, padding=2, output_padding=1
+            ),
+            torch.nn.ReLU(),
+            torch.nn.ConvTranspose2d(
+                mid_channels, mid_channels, kernel_size=5, stride=2, padding=2, output_padding=1
+            ),
+            torch.nn.ReLU(),
+            torch.nn.ConvTranspose2d(
+                mid_channels, out_channels, kernel_size=5, stride=2, padding=2, output_padding=1
+            ),
+            torch.nn.ReLU(),
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        return x
+
+
 class RepresentationNetwork(torch.nn.Module):
     def __init__(
         self,
@@ -369,6 +397,35 @@ class RepresentationNetwork(torch.nn.Module):
 
         for block in self.resblocks:
             x = block(x)
+        return x
+
+
+class ReconstructionNetwork(torch.nn.Module):
+    def __init__(
+        self,
+        observation_shape,
+        stacked_observations,
+        num_blocks,
+        num_channels,
+        downsample,
+    ):
+        super().__init__()
+        self.downsample = downsample
+        self.resblocks = torch.nn.ModuleList(
+            [ResidualBlock(num_channels) for _ in range(num_blocks)]
+        )
+        if downsample:
+            self.upsample_net = UpSample(
+                num_channels,
+                observation_shape[0] * (stacked_observations + 1)
+                + stacked_observations,
+            )
+
+    def forward(self, x):
+        for block in self.resblocks:
+            x = block(x)
+        if self.downsample:
+            x = self.upsample_net(x)
         return x
 
 
@@ -512,6 +569,16 @@ class MuZeroResidualNetwork(AbstractNetwork):
             )
         )
 
+        self.reconstruction_network = torch.nn.DataParallel(
+            ReconstructionNetwork(
+                observation_shape,
+                stacked_observations,
+                num_blocks,
+                num_channels,
+                downsample,
+            )
+        )
+
         self.dynamics_network = torch.nn.DataParallel(
             DynamicsNetwork(
                 num_blocks,
@@ -570,6 +637,10 @@ class MuZeroResidualNetwork(AbstractNetwork):
             encoded_state - min_encoded_state
         ) / scale_encoded_state
         return encoded_state_normalized
+
+    def reconstruction(self, encoded_state):
+        reconstructed_observation = self.reconstruction_network(encoded_state)
+        return reconstructed_observation
 
     def dynamics(self, encoded_state, action):
         # Stack encoded_state with a game specific one hot encoded action (See paper appendix Network Architecture)
