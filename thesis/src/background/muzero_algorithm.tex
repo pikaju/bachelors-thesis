@@ -43,27 +43,27 @@ which, as we will see, is an estimate for the return when first following the ac
         \node [below left = of g0] (a1) {$a^1$};
         \node [above right = of g0] (r1) {$r^1$};
         \draw [->] (s0) -- (g0);
-        \draw [->] (a1) -- (g0);
+        \draw [->] (a1) edge [bend left] (g0);
         \draw [->] (g0) -- (s1);
-        \draw [->] (g0) -- (r1);
+        \draw [->] (g0) edge [bend right] (r1);
 
         \node [right = of s1, draw] (g1) {$g_\theta$};
         \node [right = of g1] (s2) {$s^2$};
         \node [below left = of g1] (a2) {$a^2$};
         \node [above right = of g1] (r2) {$r^2$};
         \draw [->] (s1) -- (g1);
-        \draw [->] (a2) -- (g1);
+        \draw [->] (a2) edge [bend left] (g1);
         \draw [->] (g1) -- (s2);
-        \draw [->] (g1) -- (r2);
+        \draw [->] (g1) edge [bend right] (r2);
 
         \node [right = of s2, draw] (g2) {$g_\theta$};
         \node [right = of g2] (s3) {$s^3$};
         \node [below left = of g2] (a3) {$a^3$};
         \node [above right = of g2] (r3) {$r^3$};
         \draw [->] (s2) -- (g2);
-        \draw [->] (a3) -- (g2);
+        \draw [->] (a3) edge [bend left] (g2);
         \draw [->] (g2) -- (s3);
-        \draw [->] (g2) -- (r3);
+        \draw [->] (g2) edge [bend right] (r3);
 
         \node [below = of s3, draw] (f) {$f_\theta$};
         \node [below = of f] (pv) {$\policy^3, v^3$};
