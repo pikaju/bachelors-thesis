@@ -1,7 +1,7 @@
 \newcommand{\reconstruction}{h^{-1}}
 
 \subsection{Reconstruction Function}
-kek.
+For our first proposed change, we introduce an additional $\theta$-parameterized function, which we call the \textit{reconstruction} function $\reconstruction_\theta$. Whereas the representation function $h_\theta$ maps observations to internal states, the reconstruction function should perform the inverse operation, mapping internal states to real observations, thereby performing a generative task. Notably, since we are using function approximation, the reconstructed observation will likely never be perfect. Moreover, if the embedded states stores less information than the real observations, it becomes impossible to restore what has been discarded by the representation function. We call $\hat{o}^k_t = \reconstruction_\theta(s^k_t)$ the reconstructed observation for the embedded state $s^k_t$, meaning it is an estimate of the real observation $o_{t+k}$ (see figure \ref{fig:reconstruction_function}) if the action sequences given to the environment and the dynamics function are the same.
 \begin{figure}[ht]
     \centering
     \begin{tikzpicture}[node distance=1.25]
@@ -43,3 +43,9 @@ kek.
     \caption{The reconstruction function $\reconstruction_\theta$ being used to predict future observations $o_{t+k}$ with the help of the representation function $h_\theta$ as well as the dynamics function $g_\theta$.}
     \label{fig:reconstruction_function}
 \end{figure}
+
+The reconstruction function is trained with the help of another loss term $l^g$ added to the default MuZero loss equation
+\begin{equation*}
+    l_t(\theta) = \sum^K_{k=0} \left(l^r(u_{t+k}, r_t^k) + l^v(z_{t+k}, v_t^k) + l^p(\pi_{t+k}, \policy_t^k) + l^g(o_{t+k}, \hat{o}^k_t) + c||\theta||^2\right).
+\end{equation*}
+This loss term shall be smaller, the better the model becomes at estimating observations. For simple, one-dimensional observations, a mean squared error loss may suffice. Observations including images, in contrast, are potentially best compared with a loss describing visual similarity. Notably, the error gradients are propagated further through the dynamics function $g_\theta$ and eventually the representation function $h_\theta$. This means $h_\theta$ and $g_\theta$ are incentivized to maintain information that is useful for observation reconstruction.

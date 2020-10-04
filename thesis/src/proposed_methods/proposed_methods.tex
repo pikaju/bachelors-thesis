@@ -1,5 +1,7 @@
 \section{Proposed Methods}
-In this section, we propose two changes to the MuZero algorithm that may improve its performance.
+In this section, we propose two changes to the MuZero algorithm that may improve its performance. These changes are based on the idea that MuZero is very unconstrained in its embedded state representations, which, while making the algorithm very flexible, may harm the learning process.
+
+Our changes extend MuZero by individually weightable loss terms, meaning they can be viewed as a generalization of the regular MuZero algorithm.
 
 \input{src/proposed_methods/reconstruction_function.tex}
 \input{src/proposed_methods/consistency_loss_term.tex}
