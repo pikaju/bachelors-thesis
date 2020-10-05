@@ -25,6 +25,12 @@
 \usepackage{subcaption}
 \usepackage{marvosym}
 
+\usepackage{pgfplots}
+\pgfplotsset{
+  every axis plot/.append style={line width=0.8pt},
+  compat=1.17,
+}
+
 %tikz
 \usepackage{tikz}
 \usetikzlibrary{arrows}
@@ -46,12 +52,7 @@
 \input{src/introduction.tex}
 \input{src/background/background.tex}
 \input{src/proposed_methods/proposed_methods.tex}
-
-\section{Experiments}
-\subsection{Environments}
-\subsection{Setup}
-\subsection{Results}
-\subsection{Discussion}
+\input{src/experiments/experiments.tex}
 
 \section{Conclusion}
 

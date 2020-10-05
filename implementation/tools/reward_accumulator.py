@@ -3,18 +3,29 @@ import matplotlib.pyplot as plt
 
 ax = plt.gca()
 
-for run in ['lr0.5', 'lr1.0']:
+for run in ['lr0.0', 'lr0.5', 'lr1.0']:
     frame = pd.DataFrame()
-    for test in range(0, 19):
+    for test in range(0, 25):
         url = 'http://0.0.0.0:6006/data/plugin/scalars/scalars?tag=1.Total+reward%2F1.Total+reward&run={}%2Frun{}&format=csv'.format(
             run, test)
         print(url)
         data = pd.read_csv(url)
-        frame = pd.concat([frame, data])
+        del data['Wall time']
+        data = data.rename(columns={'Value': 'reward'})
+        url = 'http://0.0.0.0:6006/data/plugin/scalars/scalars?tag=2.Workers%2F2.Training+steps&run={}%2Frun{}&format=csv'.format(
+            run, test)
+        print(url)
+        steps = pd.read_csv(url)
+        del steps['Wall time']
+        steps = steps.rename(columns={'Value': 'training_step'})
+        merged = data.merge(steps, left_on='Step', right_on='Step')
+
+        frame = pd.concat([frame, merged])
+
     frame = frame.groupby(frame.index).mean()
     frame = frame.rename(columns={'Value': run})
-    idx = len(frame) - 1 if len(frame) % 1 else len(frame)
-    frame = frame[:idx].groupby(frame.index[:idx] // 1).mean()
-    frame.plot(x='Step', y=run, ax=ax)
+    frame['reward'] = frame['reward'].rolling(window=32).mean() * 3.0
+    frame.plot(x='training_step', y='reward', ax=ax)
+    frame[['training_step', 'reward']].to_csv('{}.csv'.format(run), index=False)
 
 plt.show()

@@ -1,0 +1,36 @@
+\subsection{Results}
+kek
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            axis lines = left,
+            xlabel = Training steps,
+            ylabel = Total reward,
+            no markers,
+            table/col sep = comma,
+            legend cell align=left,
+            legend pos=south east,
+            legend style={draw=none},
+        ]
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/default/LunarLander-v2/lr0.0.csv};
+            \addlegendentry{MuZero};
+
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/hybrid/LunarLander-v2/lr0.5.csv};
+            \addlegendentry{$\frac{1}{2}l^g + \frac{1}{2}l^c$};
+
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/hybrid/LunarLander-v2/lr1.0.csv};
+            \addlegendentry{$l^g + l^c$};
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Kekpip}
+\end{figure}
