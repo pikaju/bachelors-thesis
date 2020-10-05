@@ -10,13 +10,11 @@ for run in ['lr0.0', 'lr0.5', 'lr1.0']:
             run, test)
         print(url)
         data = pd.read_csv(url)
-        del data['Wall time']
         data = data.rename(columns={'Value': 'reward'})
         url = 'http://0.0.0.0:6006/data/plugin/scalars/scalars?tag=2.Workers%2F2.Training+steps&run={}%2Frun{}&format=csv'.format(
             run, test)
         print(url)
         steps = pd.read_csv(url)
-        del steps['Wall time']
         steps = steps.rename(columns={'Value': 'training_step'})
         merged = data.merge(steps, left_on='Step', right_on='Step')
 
