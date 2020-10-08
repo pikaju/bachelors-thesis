@@ -1,5 +1,6 @@
 \subsection{Results}
 The following figures show a comparisson of the performance of agents with different weights applied to each individual loss terms proposed in this thesis. Performance is measured by training an agent for a specific amount of training steps and, at various time steps, sampling the total episode reward the agent achieves at said step.
+
 \begin{figure}[ht]
     \centering
     \begin{tikzpicture}[yscale=0.7, xscale=0.7] ]
@@ -64,9 +65,10 @@ The following figures show a comparisson of the performance of agents with diffe
             \addlegendentry{$l^g$};
         \end{axis}
     \end{tikzpicture}
-    \caption{Total episode reward comparisson of agents using the reconstruction function and the default MuZero agent in the CartPole-v1 and LunarLander-v2 environments, averaged across 32 and 25 runs, respectively.}
+    \caption{Total episode reward comparisson of agents using the reconstruction loss term ($l^g$) and the default MuZero agent in the CartPole-v1 and LunarLander-v2 environments, averaged across 32 and 25 runs, respectively.}
     \label{fig:reconstruction_results}
 \end{figure}
+The results in figure \ref{fig:reconstruction_results} show an increase in performance when adding the reconstruction function together with its associated loss term to the MuZero algorithm on all testing environments. Weighing the reconstruction loss term with $\frac{1}{2}$ only has a minor negative impact on the learning process. Note that, in the LunarLander-v2 environment, a penalty reward of $-100$ is given to an agent for crashing the lander. The default MuZero agent was barely able to exceed this threshold, whereas the reconstruction agent achieved positive total rewards.
 
 \begin{figure}[ht]
     \centering
@@ -132,9 +134,10 @@ The following figures show a comparisson of the performance of agents with diffe
             \addlegendentry{$l^c$};
         \end{axis}
     \end{tikzpicture}
-    \caption{Total episode reward comparisson of agents the reconstruction function and the default MuZero agent in the CartPole-v1 and LunarLander-v2 environments, averaged across 32 and 25 runs, respectively.}
+    \caption{Total episode reward comparisson of agents the consistency loss ($l^c$) and the default MuZero agent in the CartPole-v1 and LunarLander-v2 environments, averaged across 32 and 25 runs, respectively.}
     \label{fig:consistency_results}
 \end{figure}
+The consistency loss term agent matched or only very slightly exceeded the performance of MuZero in the CartPole-v1 environment, as can be seen in figure \ref{fig:consistency_results} (left). However, in the LunarLander-v2 task, the modified agent significantly outperformed MuZero, being almost at the same level as the reconstruction agent. A loss weight of $1$ is also notably better than a loss weight of $\frac{1}{2}$.
 
 \begin{figure}[ht]
     \centering
@@ -212,6 +215,8 @@ The following figures show a comparisson of the performance of agents with diffe
             \addlegendentry{$l^g + l^c$};
         \end{axis}
     \end{tikzpicture}
-    \caption{Total episode reward comparisson of agents using both the reconstruction function as well as the consistency loss term simultaneously in the CartPole-v1 and LunarLander-v2 environments, averaged across 32 and 25 runs, respectively.}
+    \caption{Total episode reward comparisson of agents using both the reconstruction function loss ($l^g$) as well as the consistency loss term ($l^c$) simultaneously in the CartPole-v1 and LunarLander-v2 environments, averaged across 32 and 25 runs, respectively.}
     \label{fig:hybrid_results}
 \end{figure}
+
+An agent using both loss terms simultaneously outperforms MuZero (as can be seen in figure \ref{fig:hybrid_results}), and even scores marginally better than the reconstruction loss agent, in all environments tested.
