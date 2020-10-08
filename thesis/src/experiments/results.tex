@@ -2,7 +2,178 @@
 kek
 \begin{figure}[ht]
     \centering
-    \begin{tikzpicture}
+    \begin{tikzpicture}[yscale=0.7, xscale=0.7] ]
+        \begin{axis}[
+            title = CartPole-v1,
+            axis lines = left,
+            xlabel = Training steps,
+            ylabel = Total reward,
+            no markers,
+            table/col sep = comma,
+            legend cell align=left,
+            legend pos=south east,
+            legend style={draw=none},
+        ]
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/default/CartPole-v1/lr0.0.csv};
+            \addlegendentry{MuZero};
+
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/reconstruction/CartPole-v1/lr0.5.csv};
+            \addlegendentry{$\frac{1}{2}l^g$};
+
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/reconstruction/CartPole-v1/lr1.0.csv};
+            \addlegendentry{$l^g$};
+        \end{axis}
+    \end{tikzpicture}
+    \begin{tikzpicture}[yscale=0.7, xscale=0.7] 
+        \begin{axis}[
+            title = LunarLander-v2,
+            axis lines = left,
+            xlabel = Training steps,
+            ylabel = Total reward,
+            no markers,
+            table/col sep = comma,
+            legend cell align=left,
+            legend pos=south east,
+            legend style={draw=none},
+        ]
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/default/LunarLander-v2/lr0.0.csv};
+            \addlegendentry{MuZero};
+
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/reconstruction/LunarLander-v2/lr0.5.csv};
+            \addlegendentry{$\frac{1}{2}l^g$};
+
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/reconstruction/LunarLander-v2/lr1.0.csv};
+            \addlegendentry{$l^g$};
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Total episode reward comparisson of agents using the reconstruction function and the default MuZero agent in the CartPole-v1 and LunarLander-v2 environments, averaged across 25 and 32 runs, respectively.}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[yscale=0.7, xscale=0.7] ]
+        \begin{axis}[
+            title = CartPole-v1,
+            axis lines = left,
+            xlabel = Training steps,
+            ylabel = Total reward,
+            no markers,
+            table/col sep = comma,
+            legend cell align=left,
+            legend pos=south east,
+            legend style={draw=none},
+        ]
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/default/CartPole-v1/lr0.0.csv};
+            \addlegendentry{MuZero};
+
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/consistency/CartPole-v1/lr0.5.csv};
+            \addlegendentry{$\frac{1}{2}l^c$};
+
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/consistency/CartPole-v1/lr1.0.csv};
+            \addlegendentry{$l^c$};
+        \end{axis}
+    \end{tikzpicture}
+    \begin{tikzpicture}[yscale=0.7, xscale=0.7] 
+        \begin{axis}[
+            title = LunarLander-v2,
+            axis lines = left,
+            xlabel = Training steps,
+            ylabel = Total reward,
+            no markers,
+            table/col sep = comma,
+            legend cell align=left,
+            legend pos=south east,
+            legend style={draw=none},
+        ]
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/default/LunarLander-v2/lr0.0.csv};
+            \addlegendentry{MuZero};
+
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/consistency/LunarLander-v2/lr0.5.csv};
+            \addlegendentry{$\frac{1}{2}l^c$};
+
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/consistency/LunarLander-v2/lr1.0.csv};
+            \addlegendentry{$l^c$};
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Total episode reward comparisson of agents the reconstruction function and the default MuZero agent in the CartPole-v1 and LunarLander-v2 environments, averaged across 25 and 32 runs, respectively.}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[yscale=0.7, xscale=0.7] ]
+        \begin{axis}[
+            title = CartPole-v1,
+            axis lines = left,
+            xlabel = Training steps,
+            ylabel = Total reward,
+            no markers,
+            table/col sep = comma,
+            legend cell align=left,
+            legend pos=south east,
+            legend style={draw=none},
+        ]
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/default/CartPole-v1/lr0.0.csv};
+            \addlegendentry{MuZero};
+
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/reconstruction/CartPole-v1/lr1.0.csv};
+            \addlegendentry{$l^g$};
+
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/hybrid/CartPole-v1/lr0.5.csv};
+            \addlegendentry{$\frac{1}{2}l^g + \frac{1}{2}l^c$};
+
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/hybrid/CartPole-v1/lr1.0.csv};
+            \addlegendentry{$l^g + l^c$};
+        \end{axis}
+    \end{tikzpicture}
+    \begin{tikzpicture}[yscale=0.7, xscale=0.7] 
         \begin{axis}[
             title = LunarLander-v2,
             axis lines = left,
@@ -39,5 +210,5 @@ kek
             \addlegendentry{$l^g + l^c$};
         \end{axis}
     \end{tikzpicture}
-    \caption{Kekpip}
+    \caption{Total episode reward comparisson of agents using both the reconstruction function as well as the consistency loss term simultaneously in the CartPole-v1 and LunarLander-v2 environments, averaged across 25 and 32 runs, respectively.}
 \end{figure}
