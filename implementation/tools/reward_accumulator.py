@@ -5,7 +5,7 @@ ax = plt.gca()
 
 for run in ['lr0.0', 'lr0.5', 'lr1.0']:
     frame = pd.DataFrame()
-    for test in range(0, 25):
+    for test in range(0, 32):
         url = 'http://0.0.0.0:6006/data/plugin/scalars/scalars?tag=1.Total+reward%2F1.Total+reward&run={}%2Frun{}&format=csv'.format(
             run, test)
         print(url)
@@ -22,7 +22,7 @@ for run in ['lr0.0', 'lr0.5', 'lr1.0']:
 
     frame = frame.groupby(frame.index).mean()
     frame = frame.rename(columns={'Value': run})
-    frame['reward'] = frame['reward'].rolling(window=32).mean() * 3.0
+    frame['reward'] = frame['reward'].rolling(window=8).mean()
     frame.plot(x='training_step', y='reward', ax=ax)
     frame[['training_step', 'reward']].to_csv('{}.csv'.format(run), index=False)
 
