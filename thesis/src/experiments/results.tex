@@ -1,5 +1,5 @@
 \subsection{Results}
-kek
+The following figures show a comparisson of the performance of agents with different weights applied to each individual loss terms proposed in this thesis. Performance is measured by training an agent for a specific amount of training steps and, at various time steps, sampling the total episode reward the agent achieves at said step.
 \begin{figure}[ht]
     \centering
     \begin{tikzpicture}[yscale=0.7, xscale=0.7] ]
@@ -65,6 +65,7 @@ kek
         \end{axis}
     \end{tikzpicture}
     \caption{Total episode reward comparisson of agents using the reconstruction function and the default MuZero agent in the CartPole-v1 and LunarLander-v2 environments, averaged across 32 and 25 runs, respectively.}
+    \label{fig:reconstruction_results}
 \end{figure}
 
 \begin{figure}[ht]
@@ -132,6 +133,7 @@ kek
         \end{axis}
     \end{tikzpicture}
     \caption{Total episode reward comparisson of agents the reconstruction function and the default MuZero agent in the CartPole-v1 and LunarLander-v2 environments, averaged across 32 and 25 runs, respectively.}
+    \label{fig:consistency_results}
 \end{figure}
 
 \begin{figure}[ht]
@@ -211,4 +213,5 @@ kek
         \end{axis}
     \end{tikzpicture}
     \caption{Total episode reward comparisson of agents using both the reconstruction function as well as the consistency loss term simultaneously in the CartPole-v1 and LunarLander-v2 environments, averaged across 32 and 25 runs, respectively.}
+    \label{fig:hybrid_results}
 \end{figure}
