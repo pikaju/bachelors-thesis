@@ -87,7 +87,8 @@ class MuZeroConfig:
         self.results_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../results", os.path.basename(__file__)[
                                          :-3], datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S"))  # Path to store the model weights and TensorBoard logs
         self.save_model = True  # Save the checkpoint in results_path as model.checkpoint
-        self.training_steps = 200000  # Total number of training steps (ie weights update according to a batch)
+        self.training_steps = 35000  # Total number of training steps (ie weights update according to a batch)
+        self.self_supervised_steps = 5000  # Total number of self-supervised pre-training steps
         self.batch_size = 64  # Number of parts of games to train on at each training step
         self.checkpoint_interval = 10  # Number of training steps before using the model for self-playing
         # Scale the value loss to avoid overfitting of the value function, paper recommends 0.25 (See paper appendix Reanalyze)

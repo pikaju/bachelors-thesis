@@ -68,6 +68,7 @@ class Trainer:
             shared_storage.get_info.remote("terminate")
         ):
             index_batch, batch = ray.get(replay_buffer.get_batch.remote())
+            self_supervised = self.training_step < self.config.self_supervised_steps
             self.update_lr()
             (
                 priorities,
@@ -77,7 +78,7 @@ class Trainer:
                 policy_loss,
                 reconstruction_loss,
                 consistency_loss,
-            ) = self.update_weights(batch)
+            ) = self.update_weights(batch, self_supervised)
 
             if self.config.PER:
                 # Save new priorities in the replay buffer (See https://arxiv.org/abs/1803.00933)
@@ -123,7 +124,7 @@ class Trainer:
                 ):
                     time.sleep(0.5)
 
-    def update_weights(self, batch):
+    def update_weights(self, batch, self_supervised):
         """
         Perform one training step.
         """
@@ -277,6 +278,13 @@ class Trainer:
                 + policy_loss
                 + reconstruction_loss * self.config.reconstruction_loss_weight
                 + consistency_loss * self.config.consistency_loss_weight)
+
+        # For self-supervised pre-training, we should ignore all losses produced directly
+        # or indirectly by the environment rewards
+        if self_supervised:
+            loss = (reconstruction_loss * self.config.reconstruction_loss_weight
+                    + consistency_loss * self.config.consistency_loss_weight)
+
         if self.config.PER:
             # Correct PER bias by using importance-sampling (IS) weights
             loss *= weight_batch
