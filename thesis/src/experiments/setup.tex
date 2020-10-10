@@ -1,0 +1,46 @@
+\subsection{Setup}
+We want to test our hypothesis suggesting a performance increase when applying the abovementioned changes to the MuZero agent. Because MuZero is a specialization of . Performance is measured by training an agent for a specific amount of training steps and, at various time steps, sampling the total episode reward the agent can achieve.
+
+We use \textit{muzero-general} \cite{muzero-general}, an open source implementation of MuZero that uses the Python programming language and PyTorch for automatic differentiation, as our baselines agent, and modify the code to include a reconstruction function and additional loss terms. The readout of the replay buffer must also be tweaked to include not only the observation at timestep $t$, but the $K$ subsequent observations $o_{t+1}, ..., o_{t+K}$ as well, as they are required, as they are critical for calculating our new loss values.
+
+Table \ref{tab:hyperparameters} shows the hyperparameters used by all tested model configurations. Most of the listed hyperparameters were kept as is from the muzero-general defaults. Note that we are unable to perform a comprehensive hyperparameter search due to technical limitations.
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{|l||c|c|}
+        \hline
+        & CartPole-v1 & LunarLander-v2 \\
+        \hline\hline
+        Simulations & 50 & 50 \\
+        \hline
+        Discount factor ($\gamma$) & 0.997 & 0.999 \\
+        \hline
+        Support size\footnote{Number of dimensions in the internal state vectors} & 10 & 10 \\
+        \hline
+        Training steps & 10000 & 30000 \\
+        \hline
+        Batch size & 128 & 64 \\
+        \hline
+        Value loss weight & 1.0 & 1.0 \\
+        \hline
+        Optimizer & Adam & Adam \\
+        \hline
+        L2 regularization weight & $10^{-4}$ & $10^{-4}$ \\
+        \hline
+        Learning rate ($\beta$) & $0.02 \times 0.9^{t \times 0.001}$ & 0.005 \\
+        \hline
+        Replay buffer size & 500 & 2000 \\
+        \hline
+        Unroll steps ($K$) & 10 & 10 \\
+        \hline
+        TD steps ($n$) & 50 & 30 \\
+        \hline
+        Replay prioritization exponent & 0.5 & 0.5 \\
+        \hline
+        Softmax temperature ($T$) & \makecell{
+            1.0 if $t<5000$, \\ 0.5 if $5000 \leq t < 7500$, \\ 0.25 if $t \geq 7500$
+        } & 0.35 \\
+        \hline
+    \end{tabular}
+    \caption{Hyperparameter selection for all tested agents. Parameters based on the current training step use the variable $t$.}
+    \label{tab:hyperparameters}
+\end{table}
