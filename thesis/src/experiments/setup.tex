@@ -1,7 +1,5 @@
 \subsection{Setup}
-We want to test our hypothesis suggesting a performance increase when applying the abovementioned changes to the MuZero agent. Because MuZero is a specialization of . Performance is measured by training an agent for a specific amount of training steps and, at various time steps, sampling the total episode reward the agent can achieve.
-
-We use \textit{muzero-general} \cite{muzero-general}, an open source implementation of MuZero that uses the Python programming language and PyTorch for automatic differentiation, as our baselines agent, and modify the code to include a reconstruction function and additional loss terms. The readout of the replay buffer must also be tweaked to include not only the observation at timestep $t$, but the $K$ subsequent observations $o_{t+1}, ..., o_{t+K}$ as well, as they are critical for calculating our new loss values.
+We adopt \textit{muzero-general} \cite{muzero-general}, an open source implementation of MuZero that is implemented in the Python programming language and uses PyTorch for automatic differentiation, as our baselines agent, and modify the code to include a reconstruction function and additional loss terms. The readout of the replay buffer must also be tweaked to include not only the observation at timestep $t$, but the $K$ subsequent observations $o_{t+1}, ..., o_{t+K}$ as well, as they are critical for calculating our new loss values.
 
 Table \ref{tab:hyperparameters} shows the hyperparameters used by all tested model configurations. Most of the listed hyperparameters were kept as is from the muzero-general defaults. Note that we are unable to perform a comprehensive hyperparameter search due to technical limitations.
 \begin{table}[ht]
@@ -14,7 +12,7 @@ Table \ref{tab:hyperparameters} shows the hyperparameters used by all tested mod
         \hline
         Discount factor ($\gamma$) & 0.997 & 0.999 \\
         \hline
-        Support size\footnote{Number of dimensions in the internal state vectors} & 10 & 10 \\
+        Internal state dimensions & 10 & 10 \\
         \hline
         Training steps & 10000 & 30000 \\
         \hline
@@ -44,3 +42,5 @@ Table \ref{tab:hyperparameters} shows the hyperparameters used by all tested mod
     \caption{Hyperparameter selection for all tested agents. Parameters based on the current training step use the variable $t$.}
     \label{tab:hyperparameters}
 \end{table}
+
+ Performance is measured by training an agent for a specific amount of training steps and, at various time steps, sampling the total episode reward the agent can achieve.
