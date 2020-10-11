@@ -1,7 +1,7 @@
 \subsection{Setup}
 We adopt \textit{muzero-general} \cite{muzero-general}, an open source implementation of MuZero that is implemented in the Python programming language and uses PyTorch for automatic differentiation, as our baselines agent, and modify the code to include a reconstruction function and additional loss terms. The readout of the replay buffer must also be tweaked to include not only the observation at timestep $t$, but the $K$ subsequent observations $o_{t+1}, ..., o_{t+K}$ as well, as they are critical for calculating our new loss values.
 
-We test a variety of different weights for each of the two loss terms in order to gauge their potential capability of improving performance, both individually and in union. Furthermore, as a means of showcasing self-supervised learning for MuZero, we pretrain a hybrid agent, that is, an agent using both modifications at the same time, for $5000$ training steps, using only the newly added loss terms, instead of the full formula.
+We test a variety of different weights for each of the two loss terms in order to gauge their potential capability of improving performance, both individually and in union. Furthermore, as a means of showcasing self-supervised learning for MuZero, we pretrain a hybrid agent, that is, an agent using both modifications at the same time, for $5000$ training steps, using only the newly added loss terms, instead of the full loss formula.
 
 Table \ref{tab:hyperparameters} shows the hyperparameters used by all tested model configurations. Most of the listed hyperparameters were kept as is from the muzero-general defaults. Note that we are unable to perform a comprehensive hyperparameter search due to technical limitations.
 \begin{table}[ht]

@@ -218,5 +218,73 @@ The consistency loss term agent matched or only very slightly exceeded the perfo
     \caption{Total episode reward comparisson of agents using both the reconstruction function loss ($l^g$) as well as the consistency loss term ($l^c$) simultaneously in the CartPole-v1 and LunarLander-v2 environments, averaged across 32 and 25 runs, respectively.}
     \label{fig:hybrid_results}
 \end{figure}
-
 An agent using both loss terms simultaneously outperforms MuZero (visible in figure \ref{fig:hybrid_results}), and even scores marginally better than the reconstruction loss agent, in all environments tested.
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[yscale=0.7, xscale=0.7] ]
+        \begin{axis}[
+            title = CartPole-v1,
+            axis lines = left,
+            xlabel = Training steps,
+            ylabel = Total reward,
+            no markers,
+            table/col sep = comma,
+            legend cell align=left,
+            legend pos=south east,
+            legend style={draw=none},
+        ]
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/default/CartPole-v1/lr0.0.csv};
+            \addlegendentry{MuZero};
+
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/hybrid/CartPole-v1/lr1.0.csv};
+            \addlegendentry{$l^g + l^c$};
+
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/pretrained/CartPole-v1/lr1.0.csv};
+            \addlegendentry{$l^g + l^c$ (pretrained)};
+        \end{axis}
+    \end{tikzpicture}
+    \begin{tikzpicture}[yscale=0.7, xscale=0.7] 
+        \begin{axis}[
+            title = LunarLander-v2,
+            axis lines = left,
+            xlabel = Training steps,
+            ylabel = Total reward,
+            no markers,
+            table/col sep = comma,
+            legend cell align=left,
+            legend pos=south east,
+            legend style={draw=none},
+        ]
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/default/LunarLander-v2/lr0.0.csv};
+            \addlegendentry{MuZero};
+
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/hybrid/LunarLander-v2/lr1.0.csv};
+            \addlegendentry{$l^g + l^c$};
+
+            \addplot table [
+                x = training_step,
+                y = reward,
+            ] {results/pretrained/LunarLander-v2/lr1.0.csv};
+            \addlegendentry{$l^g + l^c$ (pretrained)};
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Total episode reward comparisson of agents using both the reconstruction function loss ($l^g$) as well as the consistency loss term ($l^c$) simultaneously as a pretrained and non-pretrained variant in the CartPole-v1 and LunarLander-v2 environments, averaged across 32 and 25 runs, respectively.}
+    \label{fig:pretrained_results}
+\end{figure}
+When using self-supervised pretraining (see figure \ref{fig:pretrained_results}), training progresses very rapidly as soon as the goal is introduced. In the LunarLander-v2 environment, a mean total reward of $0$ is reached in roughly half the amount of training steps that are required by the non-pretrained agent. However, at later stages of training, the advantage fades, and, in the case of CartPole-v1, agents using self-supervised pretraining perform significantly worse than agents starting with randomly initialized networks.
