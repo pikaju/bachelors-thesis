@@ -78,6 +78,8 @@ class Trainer:
                 policy_loss,
                 reconstruction_loss,
                 consistency_loss,
+                reward_prediction_error,
+                value_prediction_error,
             ) = self.update_weights(batch, self_supervised)
 
             if self.config.PER:
@@ -106,6 +108,8 @@ class Trainer:
                     "policy_loss": policy_loss,
                     "reconstruction_loss": reconstruction_loss,
                     "consistency_loss": consistency_loss,
+                    "reward_prediction_error": reward_prediction_error,
+                    "value_prediction_error": value_prediction_error,
                 }
             )
 
@@ -212,6 +216,9 @@ class Trainer:
             ** self.config.PER_alpha
         )
 
+        reward_prediction_error = []
+        value_prediction_error = []
+
         for i in range(1, len(predictions)):
             target_hidden_state = self.model.representation(
                 observation_batch[:, i].squeeze(1)
@@ -235,6 +242,9 @@ class Trainer:
                 observation_batch[:, i],
                 target_hidden_state,
             )
+
+            prediction_error_reward.append(current_reward_loss.mean().item())
+            prediction_error_value.append(current_value_loss.mean().item())
 
             # Scale gradient by the number of unroll steps (See paper appendix Training)
             current_value_loss.register_hook(
@@ -306,6 +316,8 @@ class Trainer:
             policy_loss.mean().item(),
             reconstruction_loss.mean().item(),
             consistency_loss.mean().item(),
+            reward_prediction_error,
+            value_prediction_error,
         )
 
     def update_lr(self):

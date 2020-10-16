@@ -9,7 +9,7 @@ def config_generator():
     for run in range(256):
         for param in [1.0]:
             config = {
-                "game_name": "cartpole",
+                "game_name": "lunarlander",
                 "reconstruction_loss_weight": param,
                 "consistency_loss_weight": param,
                 "results_path": os.path.join("logs", "lr{}".format(param), "run{}".format(run)),
