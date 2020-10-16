@@ -243,8 +243,8 @@ class Trainer:
                 target_hidden_state,
             )
 
-            prediction_error_reward.append(current_reward_loss.mean().item())
-            prediction_error_value.append(current_value_loss.mean().item())
+            reward_prediction_error.append(current_reward_loss.mean().item())
+            value_prediction_error.append(current_value_loss.mean().item())
 
             # Scale gradient by the number of unroll steps (See paper appendix Training)
             current_value_loss.register_hook(
