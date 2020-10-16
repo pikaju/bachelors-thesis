@@ -6,47 +6,55 @@ We test a variety of different weights for each of the two loss terms in order t
 Table \ref{tab:hyperparameters} shows the hyperparameters used by all tested model configurations. Most of the listed hyperparameters were kept as is from the muzero-general defaults. Note that we are unable to perform a comprehensive hyperparameter search due to technical limitations.
 \begin{table}[ht]
     \centering
-    \begin{tabular}{|l||c|c|}
+    \begin{tabular}{|c|l||c|c|}
         \hline
-        & CartPole-v1 & LunarLander-v2 \\
+        & & CartPole-v1 & LunarLander-v2 \\
         \hline\hline
-        Simulations & 50 & 50 \\
+
+        & Training steps & 10000 & 30000 \\
+        \cline{2-4}
+        & Discount factor ($\gamma$) & 0.997 & 0.999 \\
+        \cline{2-4}
+        & TD steps ($n$) & 50 & 30 \\
+        \cline{2-4}
+        & Unroll steps ($K$) & 10 & 10 \\
+        \cline{2-4}
+        & Internal state dimensions & 10 & 10 \\
+
         \hline
-        Discount factor ($\gamma$) & 0.997 & 0.999 \\
+
+        \multirow{4}{*}{\begin{sideways}Losses\end{sideways}} & Optimizer & Adam & Adam \\
+        \cline{2-4}
+        & Learning rate ($\beta$) & $0.02 \times 0.9^{t \times 0.001}$ & 0.005 \\
+        \cline{2-4}
+        & Value loss weight & 1.0 & 1.0 \\
+        \cline{2-4}
+        & L2 regularization weight & $10^{-4}$ & $10^{-4}$ \\
+
         \hline
-        MCTS Dirichlet $\alpha$ & 0.25 & 0.25 \\
+
+        \multirow{3}{*}{\begin{sideways}Replay\end{sideways}} & Replay buffer size & 500 & 2000 \\
+        \cline{2-4}
+        & Prioritization exponent & 0.5 & 0.5 \\
+        \cline{2-4}
+        & Batch size & 128 & 64 \\
+
         \hline
-        MCTS exploration factor & 0.25 & 0.25 \\
-        \hline
-        MCTS pUCT $c_1$ & 1.25 & 1.25 \\
-        \hline
-        MCTS pUCT $c_2$ & 19652 & 19652 \\
-        \hline
-        Internal state dimensions & 10 & 10 \\
-        \hline
-        Training steps & 10000 & 30000 \\
-        \hline
-        Batch size & 128 & 64 \\
-        \hline
-        Value loss weight & 1.0 & 1.0 \\
-        \hline
-        Optimizer & Adam & Adam \\
-        \hline
-        L2 regularization weight & $10^{-4}$ & $10^{-4}$ \\
-        \hline
-        Learning rate ($\beta$) & $0.02 \times 0.9^{t \times 0.001}$ & 0.005 \\
-        \hline
-        Replay buffer size & 500 & 2000 \\
-        \hline
-        Unroll steps ($K$) & 10 & 10 \\
-        \hline
-        TD steps ($n$) & 50 & 30 \\
-        \hline
-        Replay prioritization exponent & 0.5 & 0.5 \\
-        \hline
-        Softmax temperature ($T$) & \makecell{
+
+        \multirow{8}{*}{\begin{sideways}MCTS\end{sideways}} & Simulations & 50 & 50 \\
+        \cline{2-4}
+        & Dirichlet $\alpha$ & 0.25 & 0.25 \\
+        \cline{2-4}
+        & Exploration factor & 0.25 & 0.25 \\
+        \cline{2-4}
+        & pUCT $c_1$ & 1.25 & 1.25 \\
+        \cline{2-4}
+        & pUCT $c_2$ & 19652 & 19652 \\
+        \cline{2-4}
+        & Softmax temperature ($T$) & \makecell{
             1.0 if $t<5000$, \\ 0.5 if $5000 \leq t < 7500$, \\ 0.25 if $t \geq 7500$
         } & 0.35 \\
+
         \hline
     \end{tabular}
     \caption{Hyperparameter selection for all tested agents. Parameters based on the current training step use the variable $t$.}
