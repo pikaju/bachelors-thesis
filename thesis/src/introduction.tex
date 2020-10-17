@@ -7,4 +7,14 @@ While supervised learning is widely applicable and is even considered somewhat s
 
 Reinforcement learning algorithms are further classified into two groups. There are \textit{model-free} algortihms, which can be viewed as an algorithm behaving instinctively, and \textit{model-based} algorithms, which plan their next moves ahead of time. The latter is arguably more human-like, and has the added benefit of being comparatively sample efficient. Furthermore, it is clear why a robot interacting with an environment, for example by catching a ball, would benefit from anticipating the behavior of other objects within its vicinity, especially when considering the delay between sensory information arriving and its motors being actuated.
 
-The MuZero Algorithm \cite{muzero} has made recent breakthroughs by becoming the new state-of-the-art model-based reinforcement learning algorithm. It outperforms its predecessors in a variety of tasks, while simultaneously being very sample efficient. This makes it appear to be a general purpose algorithm and an excellent candidate for our experiments involving robot grasping.
+The \textit{MuZero Algorithm} \cite{muzero} has made recent breakthroughs by becoming the new state-of-the-art model-based reinforcement learning algorithm. It outperforms its predecessors in a variety of tasks, while simultaneously being very sample efficient. This makes it appear to be a general purpose algorithm and an excellent candidate for our experiments involving robot grasping (see figure \ref{fig:cube_stacking}).
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{assets/cube_stacking.png}
+    \caption{A \textit{Dobot} robotic arm being tasked with picking up and stacking simulated cubes in \textit{CoppeliaSim} (\url{https://www.coppeliarobotics.com/}).}
+    \label{fig:cube_stacking}
+\end{figure}
+
+Unfortunately, upon further investigation, we realized that MuZero performed relatively poorly on our robot experiments and was slow to operate. Contrary to our expectations, older, model-free algorithms such as \textit{A3C} \cite{a3c} delivered significantly better results while being more lightweight and easy to implement. Even in very basic tasks, our own implementation as well as code provided by other researchers produced unsatisfactory benchmarks.
+
+This leads us to believe that MuZero may require team of experts and expensive hardware to reach its full potential. We question some of the design decisions made for MuZero and attempt to make it more approachable.
