@@ -1,6 +1,52 @@
 \subsection{Setup}
 We adopt \textit{muzero-general} \cite{muzero-general}, an open source implementation of MuZero that is implemented in the Python programming language and uses PyTorch for automatic differentiation, as our baselines agent, and modify the code to include a reconstruction function and additional loss terms. The readout of the replay buffer must also be tweaked to include not only the observation at timestep $t$, but the $K$ subsequent observations $o_{t+1}, ..., o_{t+K}$ as well, as they are critical for calculating our new loss values.
 
+\begin{figure}[ht]
+    \centering
+    \tikzset{%
+        cascaded/.style = {%
+            general shadow = {%
+            shadow scale = 1,
+            shadow xshift = -1ex,
+            shadow yshift = -1ex,
+            draw,
+            thick,
+            fill = white},
+            general shadow = {%
+            shadow scale = 1,
+            shadow xshift = -.5ex,
+            shadow yshift = -.5ex,
+            draw,
+            thick,
+            fill = white},
+            fill = white, 
+            draw,
+            thick,
+        }
+    }
+    \begin{tikzpicture}[every node/.style={inner sep=0.3cm}]
+        \node [draw, rectangle] (reanalyze) {Reanalyze};
+        \node [draw, rectangle, below = of reanalyze] (replay) {Replay Buffer};
+        \node [draw, rectangle, below = 1.5cm of replay] (storage) {Shared Storage};
+        \node [draw, rectangle, left = 2.5cm of storage] (trainer) {Trainer};
+        \node [draw, rectangle, cascaded, right = 2.5cm of storage] (play) {Self Play};
+        \node [draw, rectangle, below = 1.5cm of storage] (tensorboard) {TensorBoard};
+
+        \draw [->] (reanalyze) edge [bend right] node[left] {update game history} (replay);
+        \draw [->] (replay) edge [bend right] node[right] {sample game history} (reanalyze);
+
+        \draw [->] (trainer) -- node[below right=-0.2cm] {update priorities} (replay);
+        \draw [->] (replay) edge [bend right] node[above left] {get batch} (trainer);
+        \draw [->] (trainer) -- node[below] {set weights} (storage);
+        \draw [->] (storage) -- node[below] {get weights} (play);
+        \draw [->] (play) -- node[above right] {save game history} (replay);
+
+        \draw [->] (storage) -- node[left] {get info} (tensorboard);
+    \end{tikzpicture}
+    \caption{The parallelized worker structure of muzero-general.}
+    \label{fig:muzero_general}
+\end{figure}
+
 We test a variety of different weights for each of the two loss terms in order to gauge their potential capability of improving performance, both individually and in union. Furthermore, as a means of showcasing self-supervised learning for MuZero, we pretrain a hybrid agent, that is, an agent using both modifications at the same time, for $5000$ training steps, using only the newly added loss terms, instead of the full loss formula.
 
 Table \ref{tab:hyperparameters} shows the hyperparameters used by all tested model configurations. Most of the listed hyperparameters were kept as is from the muzero-general defaults. Note that we are unable to perform a comprehensive hyperparameter search due to technical limitations.
@@ -20,6 +66,8 @@ Table \ref{tab:hyperparameters} shows the hyperparameters used by all tested mod
         & Unroll steps ($K$) & 10 & 10 \\
         \cline{2-4}
         & Internal state dimensions & 10 & 10 \\
+        \cline{2-4}
+        & MuZero Reanalyze & Enabled & Enabled \\
 
         \hline
 
