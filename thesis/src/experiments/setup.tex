@@ -1,6 +1,5 @@
 \subsection{Setup}
-We adopt \textit{muzero-general} \cite{muzero-general}, an open source implementation of MuZero that is implemented in the Python programming language and uses PyTorch for automatic differentiation, as our baselines agent, and modify the code to include a reconstruction function and additional loss terms. The readout of the replay buffer must also be tweaked to include not only the observation at timestep $t$, but the $K$ subsequent observations $o_{t+1}, ..., o_{t+K}$ as well, as they are critical for calculating our new loss values.
-
+We adopt \textit{muzero-general} \cite{muzero-general}, an open source implementation of MuZero that is written in the Python programming language and uses PyTorch for automatic differentiation, as our baselines agent.
 \begin{figure}[ht]
     \centering
     \tikzset{%
@@ -46,8 +45,19 @@ We adopt \textit{muzero-general} \cite{muzero-general}, an open source implement
     \caption{The parallelized worker structure of muzero-general.}
     \label{fig:muzero_general}
 \end{figure}
+It is heavily parallelized by employing a worker architecture (see figure \ref{fig:muzero_general}), with each worker being a seperate process that communicates with its peers through message passing. This allows for flexible scaling, even across multiple machines. Worker types include
+\begin{itemize}
+    \item a \textit{Replay Buffer} worker, responsible for storing game histories as experience for the learning process,
+    \item a \textit{Shared Storage} worker, which holds logging information and distributes neural network weights,
+    \item at least one, but potentially many \textit{Self Play} processes, each interacting with its own instance of the environment, collecting experience and filling the replay buffer,
+    \item a \textit{Trainer}, which uses stored experience to perform gradient descent on the loss function, thereby improving the model,
+    \item the \textit{Reanalyze} worker, responsible for continuously updating outdated search policies and values within the replay buffer and
+    \item the main process, which takes logging information from the Shared Storage and outputs it to \textit{TensorBoard}, a tool that allows for live visualization of the training process.
+\end{itemize}
 
-We test a variety of different weights for each of the two loss terms in order to gauge their potential capability of improving performance, both individually and in union. Furthermore, as a means of showcasing self-supervised learning for MuZero, we pretrain a hybrid agent, that is, an agent using both modifications at the same time, for $5000$ training steps, using only the newly added loss terms, instead of the full loss formula.
+We modify the source code of muzero-general to include a reconstruction function and additional loss terms. The readout of the replay buffer must also be tweaked to include not only the observation at timestep $t$, but the $K$ subsequent observations $o_{t+1}, ..., o_{t+K}$ as well, as they are critical for calculating our new loss values.
+
+A variety of different weights are tested for each of the two loss terms in order to gauge their potential capability of improving performance, both individually and in union. Furthermore, as a means of showcasing self-supervised learning for MuZero, we pretrain a hybrid agent, that is, an agent using both modifications at the same time, for $5000$ training steps, using only the newly added loss terms, instead of the full loss formula.
 
 Table \ref{tab:hyperparameters} shows the hyperparameters used by all tested model configurations. Most of the listed hyperparameters were kept as is from the muzero-general defaults. Note that we are unable to perform a comprehensive hyperparameter search due to technical limitations.
 \begin{table}[ht]
