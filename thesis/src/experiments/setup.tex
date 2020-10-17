@@ -57,6 +57,8 @@ It is heavily parallelized by employing a worker architecture (see figure \ref{f
 
 We modify the source code of muzero-general to include a reconstruction function and additional loss terms. The readout of the replay buffer must also be tweaked to include not only the observation at timestep $t$, but the $K$ subsequent observations $o_{t+1}, ..., o_{t+K}$ as well, as they are critical for calculating our new loss values.
 
+The neural networks making up each of the four MuZero functions follow a very simple structure in our experiments. They consist of simple two-layer fully connected perceptrons. The first (\textit{hidden}) layer contains 16 neurons in the case of of CartPole-v1, and 64 for LunarLander-v2. The number of neurons in the second layer is determined by the desired output dimensionality. For example, the representation function must output an internal state, which, for CartPole-v1, is an eight-dimensional vector. It is therefore made up of eight neurons.
+
 A variety of different weights are tested for each of the two loss terms in order to gauge their potential capability of improving performance, both individually and in union. Furthermore, as a means of showcasing self-supervised learning for MuZero, we pretrain a hybrid agent, that is, an agent using both modifications at the same time, for $5000$ training steps, using only the newly added loss terms, instead of the full loss formula.
 
 Table \ref{tab:hyperparameters} shows the hyperparameters used by all tested model configurations. Most of the listed hyperparameters were kept as is from the muzero-general defaults. Note that we are unable to perform a comprehensive hyperparameter search due to technical limitations.
