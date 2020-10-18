@@ -32,7 +32,7 @@ Accordingly, an agent aims to maximize the expected return at each step. The con
 
 For tasks which can potentially continue indefinitely, i.e. $T = \infty$, $G_t$ may also become infinite. To avoid this issue, we introduce a \textit{discount rate} (or \textit{discount factor}) $\gamma \in [0, 1]$, and define the \textit{discounted return} as follows:
 \begin{equation*}
-    G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + ...
+    G_t^{(\gamma)} = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + ...
         = \sum_{k=t+1}^T \gamma^{k-t-1} R_k
 \end{equation*}
 The parameter $\gamma$ determines to what extend the agent prefers rewards in the near over those in the far future. As an example, an agent with $\gamma = 0$ cares only about the immediate reward, whereas the same agent with $\gamma = 0.99$ will optimize for a large time window of rewards. Choosing $\gamma < 1$ ensures that $G_t$ will not become infinite.
