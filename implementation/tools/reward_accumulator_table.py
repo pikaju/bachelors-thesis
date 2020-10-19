@@ -5,12 +5,12 @@ ax = plt.gca()
 
 frame = pd.DataFrame()
 for test in range(0, 32):
-    url = 'http://localhost:6007/data/plugin/scalars/scalars?tag=1.Total+reward%2F1.Total+reward&run=run{}&format=csv'.format(
+    url = 'http://localhost:6006/data/plugin/scalars/scalars?tag=1.Total+reward%2F1.Total+reward&run=run{}&format=csv'.format(
         test)
     print(url)
     data = pd.read_csv(url)
     data = data.rename(columns={'Value': 'reward'})
-    url = 'http://localhost:6007/data/plugin/scalars/scalars?tag=2.Workers%2F2.Training+steps&run=run{}&format=csv'.format(
+    url = 'http://localhost:6006/data/plugin/scalars/scalars?tag=2.Workers%2F2.Training+steps&run=run{}&format=csv'.format(
         test)
     print(url)
     steps = pd.read_csv(url)
