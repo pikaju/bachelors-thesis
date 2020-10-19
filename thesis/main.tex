@@ -28,6 +28,7 @@
 \usepackage{hyperref}
 \usepackage{multirow}
 \usepackage{rotating}
+\usepackage[nottoc,numbib]{tocbibind}
 
 \usepackage{pgfplots}
 \pgfplotsset{
@@ -44,14 +45,17 @@
 \newcommand{\given}{\,\middle|\,}
 \def\arraystretch{1.3}
 
-\title{Self-supervised improvements to model-based reinforcement learning with internal state representations}
+\title{Self-Supervised Improvements to Model-Based Reinforcement Learning with Internal State Representations}
 \author{Julien Scholz}
 \date{\today}
 
 \begin{document}
 
 \input{src/titlepage.tex}
+
 \input{src/abstract.tex}
+
+\newpage
 
 \tableofcontents
 
@@ -65,7 +69,7 @@
 \newpage
 \input{src/experiments/experiments.tex}
 \newpage
-\section{Conclusion}
+\input{src/conclusion.tex}
 
 \newpage
 

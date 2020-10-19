@@ -7,7 +7,7 @@ coining the term \textit{policy gradient}. Intuitively, this may be thought of a
 
 Because the return of an entire trajectory needs to be determined before adjusting the policy, REINFORCE may, by itself, only be used in episodic tasks where training occurs at the end of an episode.
 
-The regular is prone to high variance, which can slow down learning. A baseline can be introduced, which is shown to remain unbiased and often improves performance:
+The regular is prone to high variance, which can slow down learning. A baseline $b(S_t)$ can be introduced, which is shown to remain unbiased and often improves performance:
 \begin{equation*}
     \nabla_\theta \mathbb{E}\left[G_t \given S_t \right] \approx \nabla_\theta \log \pi_\theta\left(A_t \given S_t\right) \left(G_t - b(S_t)\right)
 \end{equation*}
