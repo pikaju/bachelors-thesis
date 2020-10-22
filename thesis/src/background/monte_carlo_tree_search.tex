@@ -1,1 +1,83 @@
+\newcommand{\argmax}{\operatornamewithlimits{argmax}}
+
 \subsection{Monte-Carlo Tree Search}
+We will now explain the tree search algorithm MuZero in its planning processes, a variant of Monte-Carlo tree search, in detail \cite{alphazero, muzero}. The tree, which is constructed over the course of the algorithm, consists of states, that make up the tree nodes, and actions, represented by edges. Each path in the tree makes up a trajectory. Our goal is to find the most promising action, that is, the action which yields the highest expected return, starting from the root state. A simple tree is visualized in figure \ref{fig:mcts_simple}
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+        \node [draw, circle] (s0) {$s_0$};
+        \node [draw, circle, below left = of s0] (s1) {$s^1$};
+        \node [draw, circle, below right = of s0] (s2) {$s^2$};
+
+        \node [draw, circle, below left = of s2] (s3) {$s^3$};
+        \node [draw, circle, below = of s2] (s4) {$s^4$};
+        \node [draw, circle, below right = of s2] (s5) {$s^5$};
+
+        \draw [->] (s0) -- node[above left] {$a^1$} (s1);
+        \draw [->] (s0) -- node[above right] {$a^2$} (s2);
+        \draw [->] (s2) -- node[above left] {$a^3$} (s3);
+        \draw [->] (s2) -- node[right] {$a^4$} (s4);
+        \draw [->] (s2) -- node[above right] {$a^5$} (s5);
+    \end{tikzpicture}
+    \caption{A simplified view of a Monte-Carlo search tree. Note that the number of available actions in state $s^0$ differs from those in state $s^2$.}
+    \label{fig:mcts_simple}
+\end{figure}
+
+Let $S(s, a)$ denote the state we receive when following action $a$ in state $s$. For each edge, we store some additional data:
+\begin{itemize}
+    \item $N(s, a)$ shall store the number of times we have visited action $a$ in state $s$ during the course of the search.
+    \item $Q(s, a)$, similarly to the Q-table in Q-learning, represents the expected action-value of action $a$ in state $s$.
+    \item $P(s, a) \in [0, 1]$ is an action probability, with $\sum_{a \in \mathscr{S}(s)} P(s, a) = 1$. In other words, $P$ defines a probability distribution across all available actions for each state $s$, i.e. a policy. We will see that these policies are taken from the policy output of the prediction function.
+    \item $R(s, a)$ is the expected reward when taking action $a$ in state $s$. Again, these values will be taken directly from the model's ouputs.
+\end{itemize}
+
+TODO:
+At the beginning of the algorithm, the tree is created with only an initial state $s^0$, which, in the case of MuZero, can be derived through the use of the representation function on an environment state. The search can then be divided into three stages, which are repeated for a number of simulations.
+\begin{enumerate}
+    \item In the \textit{selection} stage, we want to find the part of the tree which is most useful to be expanded next. In this process, we want to create a balance between further advancing trajectories which are already promising, or those, which have not been explored sufficiently, as they seem unfavorable.
+
+    We traverse the tree, starting from the root node $s^0$, for $k=1 \dots l$ steps, until we reach the uninitialized state $s^l$, which shall become our new leaf state. At each step, we follow the edge (or action) that maximizes an upper confidence bound, called pUCT\footnote{polynomical Upper Confidence Trees}:
+    \begin{multline*}
+        a^k = \argmax_a \Bigg[
+            Q(s, a) +
+            P(s, a) \cdot
+            \frac{\sqrt{\sum_b N(s,b)}}{1 + N(s, a)} \\
+            \cdot \left(
+                c_1 + \log \left(
+                    \frac{\sum_b N(s, b) + c_2 + 1}{c_2}
+                \right)
+            \right)
+        \Bigg]
+    \end{multline*}
+    The $Q(s, a)$ term prioritizes those actions which lead to states with a higher action-value, whereas $P(s, a)$ uses the models policy as a heuristic for promising states. To encourage more exploration of the state space, these terms are balanced through the constants $c_1$ and $c_2$ with the visit counts of the respective edge. An edge that has been visited less frequently therefore receives a higher pUCT value.
+
+    For each step $k < l$ of the traversal, we take note of $s^k = S \left(s^{k-1}, a^k \right)$ and $r^k = R \left(s^{k-1}, a^k \right)$. The entries for $S \left(s^{l-1}, a^l \right)$ and $R \left(s^{l-1}, a^l \right)$ are yet to be initialized.
+
+    \item In the \textit{expansion} stage, we attach a new state $s^l$ to the tree. We can use the MuZero algorithm's dynamics function $r^l, s^l = g_\theta \left(s^{l-1}, a^l\right)$ to advance the trajectory by a single step, and then store $S \left( s^{l-1}, a^l\right) = s^l$ and $R \left(s^{l-1}, a^l \right)$. Similarly, we compute $\policy^l, v^l = f_\theta \left(s^l\right)$ with the help of the prediction function. For each available subsequent action $a$ in state $s^l$, we store
+    \begin{equation*}
+        \begin{array}{cccc}
+            N \left(s^l, a \right) = 0, &
+            Q \left(s^l, a \right) = 0, &
+            \text{and} &
+            P \left(s^l, a \right) = \policy^l(a).
+        \end{array}
+    \end{equation*}
+    This completes the second stage of the simulation.
+
+    \item For the final \textit{backup} stage, we adjust the $Q$ and $N$ values for all edges along our trajectory in reverse order. First, for $k = l \dots 0$, we create bootstrapped return estimates
+    \begin{equation*}
+        G^k = \sum_{\tau=0}^{l - 1 - k} \gamma^\tau r_{k+1+\tau} + \gamma^{l - k} v^l
+    \end{equation*}
+    for each state in our trajectory. We update the action-values associated with each edge on our trajectory with
+    \begin{equation*}
+        Q \left(s^{k-1}, a^k\right) \leftarrow \frac{
+            N \left(s^{k-1}, a^k \right) \cdot Q \left(s^{k-1}, a^k \right) + G^k
+        }{
+            N \left(s^{k-1}, a^k \right) + 1
+        },
+    \end{equation*}
+    which is simply creates a cumulative moving average of the expected returns across simulations. Finally, we update the visit counts of all edges in our path:
+    \begin{equation*}
+        N \left(s^{k-1}, a^k \right) \leftarrow  N \left(s^{k-1}, a^k \right) + 1
+    \end{equation*}
+\end{enumerate}
