@@ -1,2 +1,6 @@
 \section{Conclusion}
-We proposed changes to the MuZero Algorithm consisting two new loss terms to the overall loss function, one of which requires an auxiliary neural network to be introduced into the system.
+We proposed changes to the MuZero Algorithm consisting of two new loss terms to the overall loss function, one of which requires an auxiliary neural network to be introduced into the system. Experiments have shown that they significantly increase in the models performance, especially when used in combination. We also demonstrated that the changes may be used for unsupervised pretraining of MuZero agents, although caution is advised, as premature convergence may implicate a learning performance reduction.
+
+Due to technical limitations, we were unable to properly investigate the usefulness of our changes in more complex environments, such as Go, the Atari game benchmark, or our initially attempted cube stacking scenario. Furthermore, an extensive hyperparameter search regarding the optimal combination of loss weights is yet to be performed. This would also give insight into whether or not one of the changes deprecates the other. We leave the aforementioned topics up to future work.
+
+The full source code used for the experiments will be made publically available on GitHub at \url{https://github.com/pikaju/bachelors-thesis}.

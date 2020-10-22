@@ -61,7 +61,7 @@ The neural networks making up each of the four MuZero functions follow a very si
 
 A variety of different weights are tested for each of the two loss terms in order to gauge their potential capability of improving performance, both individually and in union. Furthermore, as a means of showcasing self-supervised learning for MuZero, we pretrain a hybrid agent, that is, an agent using both modifications at the same time, for $5000$ training steps, using only the newly added loss terms, instead of the full loss formula.
 
-Table \ref{tab:hyperparameters} shows the hyperparameters used by all tested model configurations. Most of the listed hyperparameters were kept as is from the muzero-general defaults. Note that we are unable to perform a comprehensive hyperparameter search due to technical limitations.
+Table \ref{tab:hyperparameters} shows the hyperparameters used by all tested model configurations. Based on the muzero-general default parameters, only the number of training steps was reduced in order to be able to perform additional test runs with the newly freed resources. Note that we are unable to perform a comprehensive hyperparameter search due to technical limitations.
 \begin{table}[ht]
     \centering
     \begin{tabular}{|c|l||c|c|}
@@ -69,7 +69,7 @@ Table \ref{tab:hyperparameters} shows the hyperparameters used by all tested mod
         & & CartPole-v1 & LunarLander-v2 \\
         \hline\hline
 
-        & Training steps & 10000 & 30000 \\
+        & Training steps & $10000^*$ & $30000^*$ \\
         \cline{2-4}
         & Discount factor ($\gamma$) & 0.997 & 0.999 \\
         \cline{2-4}
@@ -117,7 +117,7 @@ Table \ref{tab:hyperparameters} shows the hyperparameters used by all tested mod
 
         \hline
     \end{tabular}
-    \caption{Hyperparameter selection for all tested agents. Parameters based on the current training step use the variable $t$.}
+    \caption{Hyperparameter selection for all tested agents. Parameters based on the current training step use the variable $t$. Only parameters marked with a $^*$ are different from the muzero-general defaults.}
     \label{tab:hyperparameters}
 \end{table}
 

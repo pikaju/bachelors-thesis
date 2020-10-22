@@ -313,7 +313,7 @@ An agent using both loss terms simultaneously outperforms MuZero (visible in fig
 \end{figure}
 When using self-supervised pretraining (see figure \ref{fig:pretrained_results}), training progresses very rapidly as soon as the goal is introduced. In the LunarLander-v2 environment, a mean total reward of $0$ is reached in roughly half the amount of training steps that are required by the non-pretrained agent. However, at later stages of training, the advantage fades, and, in the case of CartPole-v1, agents using self-supervised pretraining perform significantly worse than agents starting with randomly initialized networks.
 
-The fully trained agents are compared in table \ref{tab:results_table}.
+The fully trained agents are compared in table \ref{tab:results_table}. Training took place on high-end NVIDIA GPUs and several processor cores and the experiments took multiple weeks to complete.
 \begin{table}[ht]
     \centering
     \begin{tabular}{|l||c|c|}
