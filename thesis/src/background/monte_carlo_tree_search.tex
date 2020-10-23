@@ -31,8 +31,7 @@ Let $S(s, a)$ denote the state we receive when following action $a$ in state $s$
     \item $R(s, a)$ is the expected reward when taking action $a$ in state $s$. Again, these values will be taken directly from the model's ouputs.
 \end{itemize}
 
-TODO:
-At the beginning of the algorithm, the tree is created with only an initial state $s^0$, which, in the case of MuZero, can be derived through the use of the representation function on an environment state. The search can then be divided into three stages, which are repeated for a number of simulations.
+At the beginning of the algorithm, the tree is created with an initial state $s^0$, which, in the case of MuZero, can be derived through the use of the representation function on an environment state. The search can then be divided into three stages, which are repeated for a number of simulations.
 \begin{enumerate}
     \item In the \textit{selection} stage, we want to find the part of the tree which is most useful to be expanded next. In this process, we want to create a balance between further advancing trajectories which are already promising, or those, which have not been explored sufficiently, as they seem unfavorable.
 
@@ -76,8 +75,20 @@ At the beginning of the algorithm, the tree is created with only an initial stat
             N \left(s^{k-1}, a^k \right) + 1
         },
     \end{equation*}
-    which is simply creates a cumulative moving average of the expected returns across simulations. Finally, we update the visit counts of all edges in our path:
+    which simply creates a cumulative moving average of the expected returns across simulations. Finally, we update the visit counts of all edges in our path:
     \begin{equation*}
         N \left(s^{k-1}, a^k \right) \leftarrow  N \left(s^{k-1}, a^k \right) + 1
     \end{equation*}
 \end{enumerate}
+
+This completes the three stages of the Monte-Carlo tree search algorithm. However, there is an issue with our pUCT formula. The $P(s, a)$ term will always be between $0$ and $1$, whereas $Q(s, a)$ is unbounded, and depends on the magnitude of environment rewards. This makes them difficult to balance. Effectively, we are adding up different units of measurement. A simple solution would be to divide $Q(s, a)$ by the maximum reward that is observable in the environment, as a means of normalizing it. Unfortunately, the maximum reward may not be known, and adding prior knowledge would make MuZero less of a general purpose algorithm. Instead, we normalize our Q-values dynamically through min-max normalization with other Q-values in the current search tree:
+\begin{equation*}
+    \overline{Q} \left(s^{k-1}, a^k\right) = \frac{
+        Q \left(s^{k-1}, a^k\right) - \min_{s, a \in Tree} Q(s, a)
+    }{
+        \max{s, a \in Tree} Q(s, a) - \min_{s, a \in Tree} Q(s, a)
+    }
+\end{equation*}
+In our pUCT formula, we may simply replace $Q(s, a)$ with $\overline{Q}(s, a)$.
+
+By itself, Monte-Carlo tree search is only designed for discrete, finite action spaces. This makes MuZero infeasible for, for example, robotics, as joint actuations are commonly treated as continuous actions. However, prior work has shown that MuZero may be made continuous through a strategy named \textit{progressive widening}, in which discrete actions are sampled from the continous action space and attached to the tree over the course of the algorithm \cite{continuous-muzero}.
