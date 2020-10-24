@@ -3,9 +3,9 @@ We now explain one possible approach to optimize an agent's behavior by directly
 \begin{equation*}
     \nabla_\theta \mathbb{E}\left[G_t \given S_t \right] \approx \nabla_\theta \log \pi_\theta\left(A_t \given S_t\right) G_t,
 \end{equation*}
-coining the term \textit{policy gradient}. Intuitively, this may be thought of as increasing or decreasing the probability of actions on a given trajectory based on the return of said trajectory.
+coining the term \textit{policy gradient}. Intuitively, this may be thought of as increasing or decreasing the probability of actions on a given trajectory depending on the trajectory's return.
 
-Because the return of an entire trajectory needs to be determined before adjusting the policy, REINFORCE may, by itself, only be used in episodic tasks where training occurs at the end of an episode.
+Because the returns $G_t$ cannot be determined before a terminal state has been reached, REINFORCE may, by itself, only be used in episodic tasks where training occurs at the end of an episode.
 
 The regular policy gradient is prone to high variance, which can slow down learning. A baseline $b(S_t)$ can be introduced, which is shown to remain unbiased and often improves performance:
 \begin{equation*}

@@ -1,14 +1,14 @@
 \subsubsection{Policy and Value Functions}
-An agent's behavior can be described statistically. We define the \textit{policy} of an agent to be a probability distrubution for taking certain actions in certain states. For a state $s \in \mathscr{S}$ and a legal action $a \in \mathscr{A}(s)$, $\pi\left(a \given s\right)$ is the probability that the agent will perform $a$ in $s$. The learning process therefore consists of adapting $\pi$ over time to maximize the expected return \cite{bible}.
+An agent's behavior can be described stochastically. We define the \textit{policy} of an agent to be the probability distributions for taking each available action in the respective states. For a state $s \in \mathscr{S}$, a legal action $a \in \mathscr{A}(s)$, and a policy $\pi$, $\pi\left(a \given s\right)$ is the probability that the agent will perform $a$ in $s$. The learning process consists of adapting $\pi$ over time to maximize the expected return \cite{bible}.
 
-The \textit{value} is another useful measure for a reinforcement learning agent. It describes how good it is for the agent, following a specific policy, to be in a specific state, i.e. the expected return. We define the \textit{state-value function for policy $\pi$} \cite{bible} as
+The \textit{value} is another useful measure for a reinforcement learning agent. It describes how good it is for the agent, following a specific policy, to be in a specific state. In other words, the value is the expected return for a policy. We define the \textit{state-value function for policy $\pi$} \cite{bible} as
 \begin{equation*}
     v_\pi(s) = \mathbb{E}_\pi\left[G_t | S_t = s\right]
              = \mathbb{E}_\pi\left[\sum_{k=0}^\infty \gamma^k R_{t+k+1} \given S_t = s\right], \forall s \in \mathscr{S}
 \end{equation*}
 for Markov Decision Processes.
 
-State-value functions are not applicable to cases in which the agent tries to diverge from its current policy $\pi$. Because of this, we additionally define the \textit{action-value function for policy $\pi$}, $q_\pi$, \cite{bible} as the expected return when taking any action $a \in \mathscr{A}(s)$ in state $s \in \mathscr{S}$, and subsequently following policy $\pi$:
+State-value functions do not apply to cases in which the agent tries to diverge from its current policy $\pi$. Because of this, we additionally define the \textit{action-value function for policy $\pi$} \cite{bible}, $q_\pi$, as the expected return when taking any action $a \in \mathscr{A}(s)$ in state $s \in \mathscr{S}$, and subsequently following policy $\pi$:
 \begin{equation*}
     q_\pi(s, a) = \mathbb{E}_\pi\left[G_t | S_t = s, A_t = a\right]
              = \mathbb{E}_\pi\left[\sum_{k=0}^\infty \gamma^k R_{t+k+1} \given S_t = s, A_t = a\right], \forall s \in \mathscr{S}
