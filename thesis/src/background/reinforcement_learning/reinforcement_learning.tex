@@ -1,7 +1,9 @@
 \subsection{Reinforcement Learning}
-Formally, reinforcement learning is the act of learning a mapping from \textit{observations} to \textit{actions} so as to maximize a real-valued \textit{reward} \cite{bible}. In contrast to one of the other learning paradigms, supervised learning, the learner is not told which actions result in the largest reward for different observations. Instead, they must try out different actions in different situations to discover a useful behavior.
+When talking about reinforcement learning (\textit{RL}), we refer to a learning instance interacting with its surroundings and improving its behavior over time to reach a given goal. As an example, a learner could play the board game Chess by interacting with the pieces on the board and aiming to reach a winning state.
 
-The principles behind reinforcement learning are inspired by the way animals learn. Behavioral psychology has found that actions can be encouraged or surpressed when they are followed up with positive or negative stimuli \cite{thorndike}.
+Formally, reinforcement learning is the act of learning a mapping from \textit{observations} to \textit{actions} so as to maximize a real-valued \textit{reward} \cite{bible}. In contrast to one of the other learning paradigms, supervised learning, the learner is not told which actions result in the largest reward for different observations. Instead, they must try out various actions in different situations to discover useful behavior.
+
+The principles behind reinforcement learning are inspired by the way animals learn. Behavioral psychology has found that actions can be encouraged or suppressed when they are followed up with positive or negative stimuli \cite{thorndike}.
 
 \input{src/background/reinforcement_learning/markov_decision_process.tex}
 \input{src/background/reinforcement_learning/policy_and_value_functions.tex}
