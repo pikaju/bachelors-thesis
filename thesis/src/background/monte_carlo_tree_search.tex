@@ -1,7 +1,7 @@
 \newcommand{\argmax}{\operatornamewithlimits{argmax}}
 
 \subsection{Monte-Carlo Tree Search}
-We will now explain the tree search algorithm MuZero in its planning processes, a variant of Monte-Carlo tree search, in detail \cite{alphazero, muzero}. The tree, which is constructed over the course of the algorithm, consists of states, that make up the tree nodes, and actions, represented by edges. Each path in the tree makes up a trajectory. Our goal is to find the most promising action, that is, the action which yields the highest expected return, starting from the root state. A simple tree is visualized in figure \ref{fig:mcts_simple}
+We will now explain the tree search algorithm MuZero uses in its planning processes, a variant of Monte-Carlo tree search, in detail \cite{alphazero, muzero}. The tree, which is constructed over the course of the algorithm, consists of states, that make up the nodes, and actions, represented by edges. Each path in the tree can be viewed as a trajectory. Our goal is to find the most promising action, that is, the action which yields the highest expected return, starting from the root state. A simple tree is visualized in figure \ref{fig:mcts_simple}.
 \begin{figure}[ht]
     \centering
     \begin{tikzpicture}
@@ -23,19 +23,19 @@ We will now explain the tree search algorithm MuZero in its planning processes, 
     \label{fig:mcts_simple}
 \end{figure}
 
-Let $S(s, a)$ denote the state we receive when following action $a$ in state $s$. For each edge, we store some additional data:
+Let $S(s, a)$ denote the state we reach when following action $a$ in state $s$. For each edge, we keep additional data:
 \begin{itemize}
-    \item $N(s, a)$ shall store the number of times we have visited action $a$ in state $s$ during the course of the search.
-    \item $Q(s, a)$, similarly to the Q-table in Q-learning, represents the expected action-value of action $a$ in state $s$.
-    \item $P(s, a) \in [0, 1]$ is an action probability, with $\sum_{a \in \mathscr{S}(s)} P(s, a) = 1$. In other words, $P$ defines a probability distribution across all available actions for each state $s$, i.e. a policy. We will see that these policies are taken from the policy output of the prediction function.
-    \item $R(s, a)$ is the expected reward when taking action $a$ in state $s$. Again, these values will be taken directly from the model's ouputs.
+    \item $N(s, a)$ shall store the number of times we have visited action $a$ in state $s$ during the search.
+    \item $Q(s, a)$, similar to the Q-table in Q-learning, represents the action-value of action $a$ in state $s$.
+    \item $P(s, a) \in [0, 1]$ is an action probability, with $\sum_{a \in \mathscr{A}(s)} P(s, a) = 1$. In other words, $P$ defines a probability distribution across all available actions for each state $s$, i.e. a policy. We will see that these policies are taken from the policy output of the prediction function.
+    \item $R(s, a)$ is the expected reward when taking action $a$ in state $s$. Again, these values will be taken directly from the model's outputs.
 \end{itemize}
 
-At the beginning of the algorithm, the tree is created with an initial state $s^0$, which, in the case of MuZero, can be derived through the use of the representation function on an environment state. The search can then be divided into three stages, which are repeated for a number of simulations.
+At the start of the algorithm, the tree is created with an initial state $s^0$, which, in the case of MuZero, can be derived through the use of the representation function on an environment state. The search is then divided into three stages that are repeated for a number of \textit{simulations}.
 \begin{enumerate}
-    \item In the \textit{selection} stage, we want to find the part of the tree which is most useful to be expanded next. In this process, we want to create a balance between further advancing trajectories which are already promising, or those, which have not been explored sufficiently, as they seem unfavorable.
+    \item In the \textit{selection} stage, we want to find the part of the tree that is most useful to be expanded next. We want to balance between further advancing already promising trajectories, and those, that have not been explored sufficiently, as they seem unfavorable.
 
-    We traverse the tree, starting from the root node $s^0$, for $k=1 \dots l$ steps, until we reach the uninitialized state $s^l$, which shall become our new leaf state. At each step, we follow the edge (or action) that maximizes an upper confidence bound, called pUCT\footnote{polynomical Upper Confidence Trees}:
+    We traverse the tree, starting from the root node $s^0$, for $k=1 \dots l$ steps, until we reach the currently uninitialized state $s^l$, which shall become our new leaf state. At each step, we follow the edge (or action) that maximizes an upper confidence bound, called pUCT\footnote{polynomical Upper Confidence Trees}:
     \begin{multline*}
         a^k = \argmax_a \Bigg[
             Q(s, a) +
@@ -48,11 +48,11 @@ At the beginning of the algorithm, the tree is created with an initial state $s^
             \right)
         \Bigg]
     \end{multline*}
-    The $Q(s, a)$ term prioritizes those actions which lead to states with a higher action-value, whereas $P(s, a)$ uses the models policy as a heuristic for promising states. To encourage more exploration of the state space, these terms are balanced through the constants $c_1$ and $c_2$ with the visit counts of the respective edge. An edge that has been visited less frequently therefore receives a higher pUCT value.
+    The $Q(s, a)$ term prioritizes actions leading to states with a higher value, whereas $P(s, a)$ can be thought of as a heuristic for promising states provided by the model. To encourage more exploration of the state space, these terms are balanced through the constants $c_1$ and $c_2$ with the visit counts of the respective edge. An edge that has been visited less frequently therefore receives a higher pUCT value.
 
-    For each step $k < l$ of the traversal, we take note of $s^k = S \left(s^{k-1}, a^k \right)$ and $r^k = R \left(s^{k-1}, a^k \right)$. The entries for $S \left(s^{l-1}, a^l \right)$ and $R \left(s^{l-1}, a^l \right)$ are yet to be initialized.
+    For each step $k < l$ of the traversal, we take note of $a^k$, $s^k = S \left(s^{k-1}, a^k \right)$, and $r^k = R \left(s^{k-1}, a^k \right)$. The entries for $S \left(s^{l-1}, a^l \right)$ and $R \left(s^{l-1}, a^l \right)$ are yet to be initialized.
 
-    \item In the \textit{expansion} stage, we attach a new state $s^l$ to the tree. We can use the MuZero algorithm's dynamics function $r^l, s^l = g_\theta \left(s^{l-1}, a^l\right)$ to advance the trajectory by a single step, and then store $S \left( s^{l-1}, a^l\right) = s^l$ and $R \left(s^{l-1}, a^l \right)$. Similarly, we compute $\policy^l, v^l = f_\theta \left(s^l\right)$ with the help of the prediction function. For each available subsequent action $a$ in state $s^l$, we store
+    \item In the \textit{expansion} stage, we attach a new state $s^l$ to the tree. To determine this state, we use the MuZero algorithm's dynamics function $r^l, s^l = g_\theta \left(s^{l-1}, a^l\right)$, advancing the trajectory by a single step, and then store $S \left( s^{l-1}, a^l\right) = s^l$ and $R \left(s^{l-1}, a^l \right) = r^l$. Similarly, we compute $\policy^l, v^l = f_\theta \left(s^l\right)$ with the help of the prediction function. For each available subsequent action $a$ in state $s^l$, we store
     \begin{equation*}
         \begin{array}{cccc}
             N \left(s^l, a \right) = 0, &
@@ -63,7 +63,7 @@ At the beginning of the algorithm, the tree is created with an initial state $s^
     \end{equation*}
     This completes the second stage of the simulation.
 
-    \item For the final \textit{backup} stage, we adjust the $Q$ and $N$ values for all edges along our trajectory in reverse order. First, for $k = l \dots 0$, we create bootstrapped return estimates
+    \item For the final \textit{backup} stage, we update the $Q$ and $N$ values for all edges along our trajectory in reverse order. First, for $k = l \dots 0$, we create bootstrapped return estimates
     \begin{equation*}
         G^k = \sum_{\tau=0}^{l - 1 - k} \gamma^\tau r_{k+1+\tau} + \gamma^{l - k} v^l
     \end{equation*}
@@ -81,7 +81,7 @@ At the beginning of the algorithm, the tree is created with an initial state $s^
     \end{equation*}
 \end{enumerate}
 
-This completes the three stages of the Monte-Carlo tree search algorithm. However, there is an issue with our pUCT formula. The $P(s, a)$ term will always be between $0$ and $1$, whereas $Q(s, a)$ is unbounded, and depends on the magnitude of environment rewards. This makes them difficult to balance. Effectively, we are adding up different units of measurement. A simple solution would be to divide $Q(s, a)$ by the maximum reward that is observable in the environment, as a means of normalizing it. Unfortunately, the maximum reward may not be known, and adding prior knowledge would make MuZero less of a general purpose algorithm. Instead, we normalize our Q-values dynamically through min-max normalization with other Q-values in the current search tree:
+This completes the three stages of the Monte-Carlo tree search algorithm. However, there is an issue with our pUCT formula. The $P(s, a)$ term should never leave the interval $[0, 1]$, whereas $Q(s, a)$ is theoretically unbounded, and depends on the magnitude of environment rewards. This makes the two terms difficult to balance. Intuitively, we are adding up unrelated units of measurement. A simple solution is to divide $Q(s, a)$ by the maximum reward that can be observed in the environment, as a means of normalizing it. Unfortunately, the maximum reward may not be known, and adding prior knowledge for each environment would make MuZero less of a general-purpose algorithm. Instead, we normalize our Q-values dynamically through min-max normalization with other Q-values in the current search tree:
 \begin{equation*}
     \overline{Q} \left(s^{k-1}, a^k\right) = \frac{
         Q \left(s^{k-1}, a^k\right) - \min_{s, a \in Tree} Q(s, a)
@@ -91,4 +91,10 @@ This completes the three stages of the Monte-Carlo tree search algorithm. Howeve
 \end{equation*}
 In our pUCT formula, we may simply replace $Q(s, a)$ with $\overline{Q}(s, a)$.
 
-By itself, Monte-Carlo tree search is only designed for discrete, finite action spaces. This makes MuZero infeasible for, for example, robotics, as joint actuations are commonly treated as continuous actions. However, prior work has shown that MuZero may be made continuous through a strategy named \textit{progressive widening}, in which discrete actions are sampled from the continous action space and attached to the tree over the course of the algorithm \cite{continuous-muzero}.
+After the tree has been fully constructed, we may define a policy for the root state as
+\begin{equation*}
+    p_a = \frac{N(a)^{1/T}}{\sum_b N(b)^{1/T}},
+\end{equation*}
+where $p_a$ is the probability of taking action $a$ in state $s^0$, and $T$ is a temperature parameter further balancing between exploration and exploitation. The search value shall be computed from all action-values $Q(s^0, a)$ based on this policy.
+
+By itself, the Monte-Carlo tree search is only designed for discrete, finite action spaces. This makes MuZero infeasible for, for example, robotics, as joint actuations are commonly treated as continuous actions. However, prior work has shown that MuZero can be made continuous through a strategy named \textit{progressive widening}, in which discrete actions are sampled from the continuous action space and added to the tree over the course of the algorithm \cite{continuous-muzero}.
