@@ -1,14 +1,14 @@
 \subsection{Setup}
-We adopt \textit{muzero-general} \cite{muzero-general}, an open source implementation of MuZero that is written in the Python programming language and uses PyTorch for automatic differentiation, as our baselines agent. It is heavily parallelized by employing a worker architecture (see figure \ref{fig:muzero_general}), with each worker being a seperate process that communicates with its peers through message passing. This allows for flexible scaling, even across multiple machines. Worker types include
+We adopt \textit{muzero-general} \cite{muzero-general}, an open-source implementation of MuZero that is written in the Python programming language and uses PyTorch for automatic differentiation, as our baselines agent. It is heavily parallelized by employing a worker architecture (see figure \ref{fig:muzero_general}), with each worker being a seperate process that communicates with its peers through message passing. This allows for flexible scaling, even across multiple machines. Worker types include
 \begin{itemize}
     \item a \textit{Replay Buffer} worker, responsible for storing game histories as experience for the learning process,
-    \item a \textit{Shared Storage} worker, which holds logging information and distributes neural network weights,
+    \item a \textit{Shared Storage} worker, which holds logging information and distributes neural network parameters,
     \item at least one, but potentially many \textit{Self Play} processes, each interacting with its own instance of the environment, collecting experience and filling the replay buffer,
     \item a \textit{Trainer}, which uses stored experience to perform gradient descent on the loss function, thereby improving the model,
     \item the \textit{Reanalyze} worker, responsible for continuously updating outdated search policies and values within the replay buffer and
     \item the main process, which takes logging information from the Shared Storage and outputs it to \textit{TensorBoard}, a tool that allows for live visualization of the training process.
 \end{itemize}
-Note that the term \textit{self-play} originates from AlphaZero or MuZero agents playing a board game like Chess against themselves to learn strategies without any human influence. Nevertheless, we use the term even for environments operated by only a single player, such as LunarLander-v2.
+Note that the term \textit{self-play} originates from AlphaZero or MuZero agents playing a board game like Chess against themselves to learn strategies without any human influence. Regardless, we use the term even for environments operated by only a single player, such as LunarLander-v2.
 \begin{figure}[ht]
     \centering
     \tikzset{%
@@ -55,13 +55,13 @@ Note that the term \textit{self-play} originates from AlphaZero or MuZero agents
     \label{fig:muzero_general}
 \end{figure}
 
-We modify the source code of muzero-general to include a reconstruction function and additional loss terms. The readout of the replay buffer must also be tweaked to include not only the observation at timestep $t$, but the $K$ subsequent observations $o_{t+1}, ..., o_{t+K}$ as well, as they are critical for calculating our new loss values.
+We modify the source code of muzero-general to include a reconstruction function and the additional loss terms. The readout of the replay buffer must also be tweaked to include not only the observation at timestep $t$, but the $K$ subsequent observations $o_{t+1}, ..., o_{t+K}$ as well, as they are critical for calculating our new loss values.
 
-The neural networks making up each of the four MuZero functions follow a very simple structure in our experiments. They consist of simple two-layer fully connected perceptrons. The first (\textit{hidden}) layer contains 16 neurons in the case of of CartPole-v1, and 64 for LunarLander-v2. The number of neurons in the second layer is determined by the desired output dimensionality. For example, the representation function must output an internal state, which, for CartPole-v1, is an eight-dimensional vector. It is therefore made up of eight neurons.
+The neural networks making up each of the three MuZero functions and our new reconstruction function follow a very simple structure in all experiments. They consist of simple two-layered fully connected perceptrons. The first (\textit{hidden}) layer contains 16 neurons in the case of CartPole-v1 and 64 for LunarLander-v2. The number of neurons in the second layer is determined by the desired output dimensionality. For example, the representation function must output an internal state, which, for CartPole-v1, is an eight-dimensional vector. Thus, the second layer is made up of eight neurons.
 
-A variety of different weights are tested for each of the two loss terms in order to gauge their potential capability of improving performance, both individually and in union. Furthermore, as a means of showcasing self-supervised learning for MuZero, we pretrain a hybrid agent, that is, an agent using both modifications at the same time, for $5000$ training steps, using only the newly added loss terms, instead of the full loss formula.
+A variety of different weights are tested for each of the two loss terms in order to gauge their capability of improving performance, both individually and in a union. Furthermore, as a means of showcasing self-supervised learning for MuZero, we pretrain a hybrid agent, that is, an agent using both modifications at the same time, for $5000$ training steps, using only the newly added loss terms, instead of the full loss formula.
 
-Table \ref{tab:hyperparameters} shows the hyperparameters used by all tested model configurations. Based on the muzero-general default parameters, only the number of training steps was reduced in order to be able to perform additional test runs with the newly freed resources. Note that we are unable to perform a comprehensive hyperparameter search due to technical limitations.
+Table \ref{tab:hyperparameters} shows the hyperparameters used by all tested model configurations. Based on the muzero-general default parameters, only the number of training steps was reduced to be able to perform additional test runs with the newly freed resources. Note that we are unable to perform a comprehensive hyperparameter search due to technical limitations.
 \begin{table}[ht]
     \centering
     \begin{tabular}{|c|l||c|c|}
