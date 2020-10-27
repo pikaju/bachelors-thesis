@@ -15,7 +15,7 @@ The optimal policy $\pi^*$, given the correct action-value function $q_{\pi^*}$,
     q_*\left(s, a\right) = \sum_{s'} \sum_r p\left(s', r \given s, a\right) \left[r + \gamma \max_{a'} q_*(s', a')\right]
 \end{equation*}
 
-In practice, the transition probabilities $p$ are usually not known. Q-learning \cite{q-learning} approaches this issue by iteratively updating a $q$-value estimates (which we will refer to as $Q$) in a tabular form, known as the Q-table. The iterative formula
+In practice, the transition probabilities $p$ are usually not known. Q-learning \cite{q-learning} approaches this issue by iteratively updating $q$-value estimates (which we will refer to as $Q$) in a tabular form, known as the Q-table. The iterative formula
 \begin{equation*}
     Q\left(S_t, A_t\right) \gets Q\left(S_t, A_t\right) + \beta\left(R_{t+1} + \gamma \max_a Q\left(S_{t+1}, A_t\right) - Q\left(S_t, A_t\right)\right),
 \end{equation*}
