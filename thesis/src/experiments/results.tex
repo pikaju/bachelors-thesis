@@ -1,7 +1,17 @@
 \subsection{Results}
-The following Figures show a comparison of the performance of agents with different weights applied to each loss term proposed in this thesis. For our notation, we use $l^g$ and $l^c$ for the reconstruction function and consistency loss modification, respectively. With $\frac{1}{2}l^g$ and $\frac{1}{2}l^g$ we denote that the default loss weight of $1$ for each term has been changed to $\frac{1}{2}$. Finally, we write a plus sign to indicate the combination of both modifications.
+We show a comparison of the performance of agents with different weights applied to each loss term proposed in this thesis. For our notation, we use $l^g$ and $l^c$ for the reconstruction function and consistency loss modification, respectively. With $\frac{1}{2}l^g$ and $\frac{1}{2}l^g$ we denote that the default loss weight of $1$ for each term has been changed to $\frac{1}{2}$. Finally, we write a plus sign to indicate the combination of both modifications.
 
-\begin{figure}[ht]
+The results in Figure \ref{fig:reconstruction_results} show an increase in performance when adding the reconstruction function together with its associated loss term to the MuZero algorithm on all testing environments. Weighting the reconstruction loss term with $\frac{1}{2}$ only has a minor negative impact on the learning process. Note that, in the LunarLander-v2 environment, a penalty reward of $-100$ is given to an agent for crashing the lander. The default MuZero agent was barely able to exceed this threshold, whereas the reconstruction agent achieved positive total rewards.
+
+The consistency loss term agent matched or only very slightly exceeded the performance of MuZero in the CartPole-v1 environment, as can be seen in Figure \ref{fig:consistency_results} (left). However, in the LunarLander-v2 task, the modified agent significantly outperformed MuZero, being almost at the same level as the reconstruction agent. A loss weight of $1$ is also notably better than a loss weight of $\frac{1}{2}$.
+
+An agent using both loss terms simultaneously outperforms MuZero (visible in Figure \ref{fig:hybrid_results}), and even scores marginally better than the reconstruction loss agent, in all environments tested.
+
+When using self-supervised pretraining (see Figure \ref{fig:pretrained_results}), training progresses very rapidly as soon as the goal is introduced. In the LunarLander-v2 environment, a mean total reward of $0$ is reached in roughly half the amount of training steps that are required by the non-pretrained agent. However, at later stages of training, the advantage fades, and, in the case of CartPole-v1, agents using self-supervised pretraining perform significantly worse than agents starting with randomly initialized networks.
+
+The fully trained agents are compared in Table \ref{tab:results_table}. Training took place on NVIDIA GeForce GTX 1080 and NVIDIA GeForce RTX 2080 Ti GPUs. Each experiment required roughly two to three days to complete.
+
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}[yscale=0.7, xscale=0.7] ]
         \begin{axis}[
@@ -75,7 +85,7 @@ The following Figures show a comparison of the performance of agents with differ
     \label{fig:reconstruction_results}
 \end{figure}
 
-\begin{figure}[ht]
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}[yscale=0.7, xscale=0.7] ]
         \begin{axis}[
@@ -148,9 +158,8 @@ The following Figures show a comparison of the performance of agents with differ
     \caption{Total episode reward comparison of agents the consistency loss ($l^c$) and the default MuZero agent in the CartPole-v1 and LunarLander-v2 environments, averaged across 32 and 25 runs, respectively.}
     \label{fig:consistency_results}
 \end{figure}
-The consistency loss term agent matched or only very slightly exceeded the performance of MuZero in the CartPole-v1 environment, as can be seen in Figure \ref{fig:consistency_results} (left). However, in the LunarLander-v2 task, the modified agent significantly outperformed MuZero, being almost at the same level as the reconstruction agent. A loss weight of $1$ is also notably better than a loss weight of $\frac{1}{2}$.
 
-\begin{figure}[ht]
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}[yscale=0.7, xscale=0.7] ]
         \begin{axis}[
@@ -235,9 +244,8 @@ The consistency loss term agent matched or only very slightly exceeded the perfo
     \caption{Total episode reward comparison of agents using both the reconstruction function loss ($l^g$) as well as the consistency loss term ($l^c$) simultaneously in the CartPole-v1 and LunarLander-v2 environments, averaged across 32 and 25 runs, respectively.}
     \label{fig:hybrid_results}
 \end{figure}
-An agent using both loss terms simultaneously outperforms MuZero (visible in Figure \ref{fig:hybrid_results}), and even scores marginally better than the reconstruction loss agent, in all environments tested.
 
-\begin{figure}[ht]
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}[yscale=0.7, xscale=0.7] ]
         \begin{axis}[
@@ -310,10 +318,8 @@ An agent using both loss terms simultaneously outperforms MuZero (visible in Fig
     \caption{Total episode reward comparison of agents using both the reconstruction function loss ($l^g$) as well as the consistency loss term ($l^c$) simultaneously as a pretrained and non-pretrained variant in the CartPole-v1 and LunarLander-v2 environments, averaged across 32 and 25 runs, respectively.}
     \label{fig:pretrained_results}
 \end{figure}
-When using self-supervised pretraining (see Figure \ref{fig:pretrained_results}), training progresses very rapidly as soon as the goal is introduced. In the LunarLander-v2 environment, a mean total reward of $0$ is reached in roughly half the amount of training steps that are required by the non-pretrained agent. However, at later stages of training, the advantage fades, and, in the case of CartPole-v1, agents using self-supervised pretraining perform significantly worse than agents starting with randomly initialized networks.
 
-The fully trained agents are compared in Table \ref{tab:results_table}. Training took place on NVIDIA GeForce GTX 1080 and NVIDIA GeForce RTX 2080 Ti GPUs. Each experiment required roughly two to three days to complete.
-\begin{table}[ht]
+\begin{table}[H]
     \centering
     \begin{tabular}{|l||c|c|}
         \hline
