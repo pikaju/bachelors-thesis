@@ -8,7 +8,7 @@ The fundamental unit of a neural network is often the McCulloch-Pitts neuron \ci
     y = h\left(\sum_{i=1}^n w_i x_i + b \right)
 \end{equation*}
 Common activation functions include \textit{sigmoid}, \textit{tanh}, or \textit{ReLU}\footnote{Rectified Linear Unit}. The full neuron is visualized in Figure \ref{fig:neuron}.
-\begin{figure}[ht]
+\begin{figure}[b]
     \centering
     \begin{subfigure}{0.49\textwidth}
         \raggedright
@@ -50,4 +50,4 @@ Individual neuron units were later put together to form the \textit{perceptron} 
 \end{equation*}
 where $W_1, \dots, W_n$ are weight matrices, $b_1, \dots, b_n$ are bias vectors and $h_1, \dots, h_n$ are activation functions for each layer. Note that the input vector $x$ is mapped to another vector $f(x)$, which may have a different number of dimensions.
 
-Perceptrons can be trained using gradient descent of an \textit{error} (or \textit{loss}) term with respect to its parameters $\theta$, which is referred to as \textit{back-propagation} \cite{back-propagation}. Calculating gradients for each neuron in a complex model is difficult and must be highly optimized. Programming libraries such as \mbox{\textit{TensorFlow}} \cite{tensorflow} or \textit{PyTorch} \cite{pytorch} solve this issue by performing automatic differentiation and parallelizing mathematical operations on the GPU.
+Perceptrons can be trained using gradient descent of an \textit{error} (or \textit{loss}) term with respect to its parameters $\theta$, which, in the context of neural networks, is referred to as \textit{back-propagation} \cite{back-propagation}. Calculating gradients for each neuron in a complex model is difficult and must be highly optimized. Programming libraries such as \mbox{\textit{TensorFlow}} \cite{tensorflow} or \textit{PyTorch} \cite{pytorch} solve this issue by performing automatic differentiation and optionally parallelizing mathematical operations like matrix multiplications on the GPU.

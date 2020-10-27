@@ -23,7 +23,7 @@ Given parameters $\theta$, we can now decide on an action policy $\pi$ for each 
     \sum_{k=1}^n \gamma^{k-1} r^k + \gamma^n v^n
 \end{equation*}
 Given the goal of an agent to maximize the return, we may now simply choose the first action of the action sequence with the highest return estimate. Alternatively, a less promising action can be selected to encourage the exploration of new behavior. At timestep $t$, we call the return estimate for the chosen action produced by our search $\svalue_t$.
-\begin{figure}[ht]
+\begin{figure}[t]
     \centering
     \begin{tikzpicture}[node distance=0.75]
         \node (ot) {$o_t$};

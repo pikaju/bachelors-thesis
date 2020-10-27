@@ -8,7 +8,7 @@ While supervised learning is widely applicable and even considered somewhat solv
 Reinforcement learning algorithms are further classified into two groups. There are \textit{model-free} algorithms, which can be viewed as behaving instinctively, and \textit{model-based} algorithms, which can plan their next moves ahead of time. The latter is arguably more human-like and has the added advantage of being comparatively sample efficient. Furthermore, it is clear why a robot interacting with an environment, for instance, by catching a ball, would benefit from anticipating the behavior of other objects within its vicinity, especially when we consider the delay between sensory information arriving and its motors being actuated.
 
 The \textit{MuZero Algorithm} \cite{muzero} has made recent breakthroughs by becoming the new state-of-the-art model-based reinforcement learning algorithm. It outperforms its competitors in a variety of tasks, while simultaneously being very sample efficient. This makes it appear to be a fairly general-purpose algorithm and an excellent candidate for our experiments involving robot grasping (see Figure \ref{fig:cube_stacking}).
-\begin{figure}[tb]
+\begin{figure}
     \centering
     \includegraphics[width=0.5\textwidth]{assets/cube_stacking.png}
     \caption{A \textit{Dobot} robotic arm being tasked with picking up and stacking simulated cubes in \textit{CoppeliaSim} (\url{https://www.coppeliarobotics.com/}).}
