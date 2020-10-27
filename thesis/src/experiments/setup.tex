@@ -1,5 +1,5 @@
 \subsection{Setup}
-We adopt \textit{muzero-general} \cite{muzero-general}, an open-source implementation of MuZero that is written in the Python programming language and uses PyTorch for automatic differentiation, as our baselines agent. It is heavily parallelized by employing a worker architecture (see figure \ref{fig:muzero_general}), with each worker being a seperate process that communicates with its peers through message passing. This allows for flexible scaling, even across multiple machines. Worker types include
+We adopt muzero-general \cite{muzero-general}, an open-source implementation of MuZero that is written in the Python programming language and uses PyTorch for automatic differentiation, as our baselines agent. It is heavily parallelized by employing a worker architecture (see figure \ref{fig:muzero_general}), with each worker being a seperate process that communicates with its peers through message passing. This allows for flexible scaling, even across multiple machines. Worker types include
 \begin{itemize}
     \item a \textit{Replay Buffer} worker, responsible for storing game histories as experience for the learning process,
     \item a \textit{Shared Storage} worker, which holds logging information and distributes neural network parameters,
