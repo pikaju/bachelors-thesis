@@ -8,7 +8,7 @@ Say, as an example, we have two subsequent observations $o_t$ and $o_{t+1}$, bet
         s^0_{t+1} = h_\theta(o_1, ..., o_t, o_{t+1})
     \end{array}
 \end{equation*}
-By applying the dynamics function $g_\theta$ to $s_t^0$ as well as action $a_t$, we receive another state representation $s_t^1$ that is intuitively supposed to reflect the environment at timestep $t+1$, much like $s_{t+1}^0$. However, so long as both state representations allow for reward and value predictions, MuZero does not require them to match, or even be similar. This pattern persists with every iteration of $g_\theta$, as is apparent in figure \ref{fig:consistency_loss}. To clarify further, imagine a constructed but theoretically legitimate example in which state vector $s^0_{t+1}$ uses only the first half of its dimensions, whereas $s^1_t$ uses only the second half.
+By applying the dynamics function $g_\theta$ to $s_t^0$ as well as action $a_t$, we receive another state representation $s_t^1$ that is intuitively supposed to reflect the environment at timestep $t+1$, much like $s_{t+1}^0$. However, so long as both state representations allow for reward and value predictions, MuZero does not require them to match, or even be similar. This pattern persists with every iteration of $g_\theta$, as is apparent in Figure \ref{fig:consistency_loss}. To clarify further, imagine a constructed but theoretically legitimate example in which state vector $s^0_{t+1}$ uses only the first half of its dimensions, whereas $s^1_t$ uses only the second half.
 \begin{figure}[ht]
     \centering
     \begin{tikzpicture}[node distance=1.25]

@@ -1,7 +1,7 @@
 \newcommand{\argmax}{\operatornamewithlimits{argmax}}
 
 \subsection{Monte-Carlo Tree Search}
-We will now explain the tree search algorithm used in MuZero's planning processes, a variant of Monte-Carlo tree search, in detail \cite{alphazero, muzero}. The tree, which is constructed over the course of the algorithm, consists of states, that make up the nodes, and actions, represented by edges. Each path in the tree can be viewed as a trajectory. Our goal is to find the most promising action, that is, the action which yields the highest expected return, starting from the root state. A simple tree is visualized in figure \ref{fig:mcts_simple}.
+We will now explain the tree search algorithm used in MuZero's planning processes, a variant of Monte-Carlo tree search, in detail \cite{alphazero, muzero}. The tree, which is constructed over the course of the algorithm, consists of states, that make up the nodes, and actions, represented by edges. Each path in the tree can be viewed as a trajectory. Our goal is to find the most promising action, that is, the action which yields the highest expected return, starting from the root state. A simple tree is visualized in Figure \ref{fig:mcts_simple}.
 \begin{figure}[ht]
     \centering
     \begin{tikzpicture}
