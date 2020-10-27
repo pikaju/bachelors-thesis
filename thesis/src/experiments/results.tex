@@ -1,5 +1,5 @@
 \subsection{Results}
-The following figures show a comparison of the performance of agents with different weights applied to each loss term proposed in this thesis. For our notation, we use $l^g$ and $l^c$ for the reconstruction function and consistency loss modification, respectively. With $\frac{1}{2}l^g$ and $\frac{1}{2}l^g$ we denote that the default loss weight of $1$ for each term has been changed to $\frac{1}{2}$. Finally, we write a plus sign to indicate the combination of both of the modifications.
+The following figures show a comparison of the performance of agents with different weights applied to each loss term proposed in this thesis. For our notation, we use $l^g$ and $l^c$ for the reconstruction function and consistency loss modification, respectively. With $\frac{1}{2}l^g$ and $\frac{1}{2}l^g$ we denote that the default loss weight of $1$ for each term has been changed to $\frac{1}{2}$. Finally, we write a plus sign to indicate the combination of both modifications.
 
 \begin{figure}[ht]
     \centering
@@ -330,6 +330,6 @@ The fully trained agents are compared in table \ref{tab:results_table}. Training
         $l^g + l^c$ (pretrained) & $335.72 \pm 162.49$ & $\mathbf{104.99 \pm 116.67}$ \\
         \hline
     \end{tabular}
-    \caption{Comparison of the default MuZero algorithm and the modifications described in this thesis on the CartPole-v1 and LunarLander-v2 environments. The terms $l^g$ and $l^c$ stands for the addition of a reconstruction or consistency loss, respectively. The results show the mean and standard deviation of the total reward for the final $500$ training steps across all test runs.}
+    \caption{Comparison of the default MuZero algorithm and the modifications described in this thesis on the CartPole-v1 and LunarLander-v2 environments. The terms $l^g$ and $l^c$ stand for the addition of a reconstruction or consistency loss, respectively. The results show the mean and standard deviation of the total reward for the final $500$ training steps across all test runs.}
     \label{tab:results_table}
 \end{table}

@@ -1,7 +1,7 @@
 \subsubsection{Policy and Value Functions}
 An agent's behavior can be described stochastically. We define the \textit{policy} of an agent to be the probability distributions for taking each available action in the respective states. For a state $s \in \mathscr{S}$, a legal action $a \in \mathscr{A}(s)$, and a policy $\pi$, $\pi\left(a \given s\right)$ is the probability that the agent will perform $a$ in $s$. The learning process consists of adapting $\pi$ over time to maximize the expected return \cite{bible}.
 
-The \textit{value} is another useful measure for a reinforcement learning agent. It describes how good it is for the agent, following a specific policy, to be in a specific state. In other words, the value is the expected return for a policy. We define the \textit{state-value function for policy $\pi$} \cite{bible} as
+The \textit{value} is another useful measure for a reinforcement learning agent. It describes how favorable a specific state is for the agent when following a given policy. In other words, the value is the expected return for a policy. We define the \textit{state-value function for policy $\pi$} \cite{bible} as
 \begin{equation*}
     v_\pi(s) = \mathbb{E}_\pi\left[G_t | S_t = s\right]
              = \mathbb{E}_\pi\left[\sum_{k=0}^\infty \gamma^k R_{t+k+1} \given S_t = s\right], \forall s \in \mathscr{S}
