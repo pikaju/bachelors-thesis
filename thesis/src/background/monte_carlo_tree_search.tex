@@ -2,7 +2,7 @@
 
 \subsection{Monte-Carlo Tree Search}
 We will now explain the tree search algorithm used in MuZero's planning processes, a variant of Monte-Carlo tree search, in detail \cite{alphazero, muzero}. The tree, which is constructed over the course of the algorithm, consists of states, that make up the nodes, and actions, represented by edges. Each path in the tree can be viewed as a trajectory. Our goal is to find the most promising action, that is, the action which yields the highest expected return, starting from the root state. A simple tree is visualized in Figure \ref{fig:mcts_simple}.
-\begin{figure}[t]
+\begin{figure}[b]
     \centering
     \begin{tikzpicture}
         \node [draw, circle] (s0) {$s_0$};
@@ -79,6 +79,7 @@ At the start of the algorithm, the tree is created with an initial state $s^0$, 
     \begin{equation*}
         N \left(s^{k-1}, a^k \right) \leftarrow  N \left(s^{k-1}, a^k \right) + 1
     \end{equation*}
+    \vspace{0.2cm}
 \end{enumerate}
 
 This completes the three stages of the Monte-Carlo tree search algorithm. However, there is an issue with our pUCT formula. The $P(s, a)$ term should never leave the interval $[0, 1]$, whereas $Q(s, a)$ is theoretically unbounded, and depends on the magnitude of environment rewards. This makes the two terms difficult to balance. Intuitively, we are adding up unrelated units of measurement. A simple solution is to divide $Q(s, a)$ by the maximum reward that can be observed in the environment, as a means of normalizing it. Unfortunately, the maximum reward may not be known, and adding prior knowledge for each environment would make MuZero less of a general-purpose algorithm. Instead, we normalize our Q-values dynamically through min-max normalization with other Q-values in the current search tree:
