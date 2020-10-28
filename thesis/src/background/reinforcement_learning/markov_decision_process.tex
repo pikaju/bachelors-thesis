@@ -5,7 +5,7 @@ We start by defining that the learning and acting instance is called the \textit
 
 In Markov Decision Processes, the agent-environment interaction only occurs at discrete timesteps $t \in \{0, 1, 2, ...\}$. At each timestep $t$, the environment provides a \textit{state} $S_t \in \mathscr{S}$ to the agent, where $\mathscr{S}$ is the set of all possible states. Based on this state, the agent must select an \textit{action} $A_t \in \mathscr{A}(S_t)$, with $\mathscr{A}(S_t)$ being the set of legal actions in state $S_t$. As a result of this action, the agent receives a \textit{reward} $R_t \in \mathscr{R} \subset \mathbb{R}$ and progresses onwards to the next state $S_{t+1}$. Note that this means there is no reward associated with the very first timestep. A sequence following this pattern of states, actions, and rewards is called a \textit{trajectory}. This process is visualized in Figure \ref{fig:mdp_visualization}.
 
-\begin{figure}
+\begin{figure}[b]
     \centering
     \begin{tikzpicture}
         \draw (0, 2) rectangle node {Agent} (4, 3);
