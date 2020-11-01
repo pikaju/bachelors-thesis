@@ -36,13 +36,13 @@ The fully trained agents are compared in Table \ref{tab:results_table}. Training
             ] {results/default/CartPole-v1/lr0.0.csv};
             \addlegendentry{MuZero};
 
-            \addplot[rgb color={0, 0, 128}] table [
+            \addplot[rgb color={32, 32, 180}] table [
                 x = training_step,
                 y = reward,
             ] {results/reconstruction/CartPole-v1/lr0.5.csv};
             \addlegendentry{$\frac{1}{2}l^g$};
 
-            \addplot[rgb color={0, 0, 255}] table [
+            \addplot[rgb color={128, 128, 255}] table [
                 x = training_step,
                 y = reward,
             ] {results/reconstruction/CartPole-v1/lr1.0.csv};
@@ -72,13 +72,13 @@ The fully trained agents are compared in Table \ref{tab:results_table}. Training
             ] {results/default/LunarLander-v2/lr0.0.csv};
             \addlegendentry{MuZero};
 
-            \addplot[rgb color={0, 0, 128}] table [
+            \addplot[rgb color={32, 32, 180}] table [
                 x = training_step,
                 y = reward,
             ] {results/reconstruction/LunarLander-v2/lr0.5.csv};
             \addlegendentry{$\frac{1}{2}l^g$};
 
-            \addplot[rgb color={0, 0, 255}] table [
+            \addplot[rgb color={128, 128, 255}] table [
                 x = training_step,
                 y = reward,
             ] {results/reconstruction/LunarLander-v2/lr1.0.csv};
@@ -114,7 +114,7 @@ The fully trained agents are compared in Table \ref{tab:results_table}. Training
             ] {results/default/CartPole-v1/lr0.0.csv};
             \addlegendentry{MuZero};
 
-            \addplot[rgb color={0, 128, 0}] table [
+            \addplot[rgb color={32, 128, 32}] table [
                 x = training_step,
                 y = reward,
             ] {results/consistency/CartPole-v1/lr0.5.csv};
@@ -150,7 +150,7 @@ The fully trained agents are compared in Table \ref{tab:results_table}. Training
             ] {results/default/LunarLander-v2/lr0.0.csv};
             \addlegendentry{MuZero};
 
-            \addplot[rgb color={0, 128, 0}] table [
+            \addplot[rgb color={32, 128, 32}] table [
                 x = training_step,
                 y = reward,
             ] {results/consistency/LunarLander-v2/lr0.5.csv};
@@ -192,7 +192,7 @@ The fully trained agents are compared in Table \ref{tab:results_table}. Training
             ] {results/default/CartPole-v1/lr0.0.csv};
             \addlegendentry{MuZero};
 
-            \addplot[rgb color={0, 0, 255}] table [
+            \addplot[rgb color={128, 128, 255}] table [
                 x = training_step,
                 y = reward,
             ] {results/reconstruction/CartPole-v1/lr1.0.csv};
@@ -234,7 +234,7 @@ The fully trained agents are compared in Table \ref{tab:results_table}. Training
             ] {results/default/LunarLander-v2/lr0.0.csv};
             \addlegendentry{MuZero};
 
-            \addplot[rgb color={0, 0, 255}] table [
+            \addplot[rgb color={128, 128, 255}] table [
                 x = training_step,
                 y = reward,
             ] {results/reconstruction/LunarLander-v2/lr1.0.csv};
