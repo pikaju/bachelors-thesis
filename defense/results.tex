@@ -331,3 +331,26 @@
         \label{fig:pretrained_results}
     \end{figure}
 \end{frame}
+
+\begin{frame}{Numeric Comparison}
+    \begin{table}
+        \centering
+        \begin{tabular}{|l||c|c|}
+            \hline
+            & CartPole-v1 & LunarLander-v2 \\
+            \hline \hline
+            MuZero & $281.42 \pm 162.48$ & $-34.86 \pm 92.87$ \\
+            \hline
+            $l^g$ & $375.85 \pm 149.38$ & $42.67 \pm 132.59$\\
+            \hline
+            $l^c$ & $296.45 \pm 174.55$ & $32.17 \pm 145.90$ \\
+            \hline
+            $l^g + l^c$ & $\mathbf{410.59 \pm 130.71}$ & $100.46 \pm 123.82$ \\
+            \hline
+            $l^g + l^c$ (pretrained) & $335.72 \pm 162.49$ & $\mathbf{104.99 \pm 116.67}$ \\
+            \hline
+        \end{tabular}
+        \caption{Comparison of the default MuZero algorithm and the modifications described in this thesis on the CartPole-v1 and LunarLander-v2 environments. The terms $l^g$ and $l^c$ stand for the addition of a reconstruction or consistency loss, respectively. The results show the mean and standard deviation of the total reward for the final $500$ training steps across all test runs.}
+        \label{tab:results_table}
+    \end{table}
+\end{frame}

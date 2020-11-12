@@ -16,6 +16,8 @@
 \usepackage{mathtools}
 \usepackage{float}
 \usepackage{cite}
+\usepackage[mathscr]{eucal}
+\usepackage{marvosym}
 
 \usepackage{pgfplots}
 \pgfplotsset{
@@ -30,6 +32,9 @@
 \usetikzlibrary{shadows}
 
 \newcommand{\given}{\,\middle|\,}
+\newcommand{\policy}{\text{\textbf{p}}}
+\newcommand{\svalue}{\nu}
+\newcommand{\reconstruction}{h^{-1}}
 \def\arraystretch{1.3}
 
 \title{Improving Model-Based Reinforcement Learning with Internal State Representations through Self-Supervision}
@@ -45,20 +50,13 @@
   \tableofcontents
 \end{frame}
 
-\begin{frame}{Ingredients for bored robots}
-    \begin{itemize}
-        \item Reinforcement learning with intrinsic rewards
-        \item Model of the environment
-        \item Continuous actions
-        \item A planning algorithm to deal with sensorimotor delays and prevent irreversable actions
-        \cite{muzero}
-    \end{itemize}
-\end{frame}
+\input{background.tex}
+\input{proposed_methods.tex}
 
 \section{Experiments}
 \input{results.tex}
 
-\begin{frame}{References}
+\begin{frame}[allowframebreaks]{References}
 \bibliography{bibliography}
 \bibliographystyle{plain}
 \end{frame}
