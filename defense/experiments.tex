@@ -95,7 +95,7 @@
                 \addlegendentry{$l^g$};
             \end{axis}
         \end{tikzpicture}
-        \caption{Total episode reward comparison of agents using the reconstruction loss term ($l^g$) and the default MuZero agent in the CartPole-v1 and LunarLander-v2 environments, averaged across 32 and 25 runs, respectively.}
+        \caption{Total episode reward comparison of agents using the reconstruction loss term ($l^g$) and the default MuZero agent.}
         \label{fig:reconstruction_results}
     \end{figure}
 \end{frame}
@@ -175,7 +175,7 @@
                 \addlegendentry{$l^c$};
             \end{axis}
         \end{tikzpicture}
-        \caption{Total episode reward comparison of agents the consistency loss ($l^c$) and the default MuZero agent in the CartPole-v1 and LunarLander-v2 environments, averaged across 32 and 25 runs, respectively.}
+        \caption{Total episode reward comparison of agents the consistency loss ($l^c$) and the default MuZero agent.}
         \label{fig:consistency_results}
     \end{figure}
 \end{frame}
@@ -267,7 +267,7 @@
                 \addlegendentry{$l^g + l^c$};
             \end{axis}
         \end{tikzpicture}
-        \caption{Total episode reward comparison of agents using both the reconstruction function loss ($l^g$) as well as the consistency loss term ($l^c$) simultaneously in the CartPole-v1 and LunarLander-v2 environments, averaged across 32 and 25 runs, respectively.}
+        \caption{Total episode reward comparison of agents using both the reconstruction function loss ($l^g$) as well as the consistency loss term ($l^c$) simultaneously.}
         \label{fig:hybrid_results}
     \end{figure}
 \end{frame}
@@ -347,7 +347,7 @@
                 \addlegendentry{$l^g + l^c$ (pretrained)};
             \end{axis}
         \end{tikzpicture}
-        \caption{Total episode reward comparison of agents using both the reconstruction function loss ($l^g$) as well as the consistency loss term ($l^c$) simultaneously as a pretrained and non-pretrained variant in the CartPole-v1 and LunarLander-v2 environments, averaged across 32 and 25 runs, respectively.}
+        \caption{Total episode reward comparison of agents using both the reconstruction function loss ($l^g$) as well as the consistency loss term ($l^c$) simultaneously as a pretrained and non-pretrained variant.}
         \label{fig:pretrained_results}
     \end{figure}
 \end{frame}
@@ -370,7 +370,7 @@
             $l^g + l^c$ (pretrained) & $335.72 \pm 162.49$ & $\mathbf{104.99 \pm 116.67}$ \\
             \hline
         \end{tabular}
-        \caption{Comparison of the default MuZero algorithm and the modifications described in this thesis on the CartPole-v1 and LunarLander-v2 environments. The terms $l^g$ and $l^c$ stand for the addition of a reconstruction or consistency loss, respectively. The results show the mean and standard deviation of the total reward for the final $500$ training steps across all test runs.}
+        \caption{Numerical comparison of the fully trained default MuZero Algorithm and the modified agents.}
         \label{tab:results_table}
     \end{table}
 \end{frame}
