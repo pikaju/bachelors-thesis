@@ -1,6 +1,6 @@
 \section{Background}
 
-\subsection{Reinforcement Learning}
+\subsection{Reinforcement Learning Fundamentals}
 
 \begin{frame}[fragile]{Markov Decision Process}
     \begin{figure}
@@ -21,6 +21,8 @@
     \end{figure}
 \end{frame}
 
+\subsection{Model-Based Reinforcement Learning}
+
 \begin{frame}[fragile]{Model-Based Reinforcement Learning}
     \begin{figure}
         \centering
@@ -33,39 +35,42 @@
 
             \node [right = of f1] (Stp1) {$\hat{S}_{t+1}$};
 
-            \node [right = of Stp1, draw, rectangle] (f2) {$f$};
-            \node [above = of f2] (Atp1) {$\hat{A}_{t+1}$};
-            \node [below = of f2] (Rtp2) {$\hat{R}_{t+2}$};
+            \onslide<2->{
+                \node [right = of Stp1, draw, rectangle] (f2) {$f$};
+                \node [above = of f2] (Atp1) {$\hat{A}_{t+1}$};
+                \node [below = of f2] (Rtp2) {$\hat{R}_{t+2}$};
 
-            \node [right = of f2] (Stp2) {$\hat{S}_{t+2}$};
+                \node [right = of f2] (Stp2) {$\hat{S}_{t+2}$};
 
-            \node [right = of Stp2] (dots) {$\dots$};
+                \node [right = of Stp2] (dots) {$\dots$};
 
-            \node [right = of dots, draw, rectangle] (f3) {$f$};
-            \node [above = of f3] (Atpnm1) {$\hat{A}_{t+n-1}$};
-            \node [below = of f3] (Rtpn) {$\hat{R}_{t+n}$};
+                \node [right = of dots, draw, rectangle] (f3) {$f$};
+                \node [above = of f3] (Atpnm1) {$\hat{A}_{t+n-1}$};
+                \node [below = of f3] (Rtpn) {$\hat{R}_{t+n}$};
 
-            \node [right = of f3] (Stpn) {$\hat{S}_{t+n}$};
+                \node [right = of f3] (Stpn) {$\hat{S}_{t+n}$};
+            }
 
             \draw [->] (St) -- (f1);
             \draw [->] (At) -- (f1);
             \draw [->] (f1) -- (Rtp1);
             \draw [->] (f1) -- (Stp1);
 
-            \draw [->] (Stp1) -- (f2);
-            \draw [->] (Atp1) -- (f2);
-            \draw [->] (f2) -- (Rtp2);
-            \draw [->] (f2) -- (Stp2);
+            \onslide<2->{
+                \draw [->] (Stp1) -- (f2);
+                \draw [->] (Atp1) -- (f2);
+                \draw [->] (f2) -- (Rtp2);
+                \draw [->] (f2) -- (Stp2);
 
-            \draw [->] (Stp2) -- (dots);
-            \draw [->] (dots) -- (f3);
+                \draw [->] (Stp2) -- (dots);
+                \draw [->] (dots) -- (f3);
 
-            \draw [->] (Atpnm1) -- (f3);
-            \draw [->] (f3) -- (Rtpn);
-            \draw [->] (f3) -- (Stpn);
-
+                \draw [->] (Atpnm1) -- (f3);
+                \draw [->] (f3) -- (Rtpn);
+                \draw [->] (f3) -- (Stpn);
+            }
         \end{tikzpicture}
-        \caption{An environment model $f : \mathscr{S} \times \mathscr{A} \to \mathscr{S} \times \mathscr{R}$ being applied recursively to predict the outcome of a trajectory. $S_t$ is the current environment state, $\hat{A}_t, ..., \hat{A}_{t+n-1}$ is a sequence of actions, and $\hat{S}_{t+1}, ..., \hat{S}_{t+n}$ as well as $\hat{R}_{t+1}, ..., \hat{R}_{t+n}$ are the predicted states and rewards, respectively. \nocite{bible, model}}
+        \caption{An environment model $f$ being applied recursively to predict the outcome of a trajectory. \nocite{bible, model}}
         \label{fig:recursive_model}
     \end{figure}
 \end{frame}
@@ -130,7 +135,7 @@
     \begin{figure}
         \centering
         \begin{tikzpicture}
-            \node [draw, circle] (s0) {$s_0$};
+            \node [draw, circle] (s0) {$s^0$};
             \node [draw, circle, below left = of s0] (s1) {$s^1$};
             \node [draw, circle, below right = of s0] (s2) {$s^2$};
 
