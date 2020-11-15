@@ -1,0 +1,51 @@
+\section*{Appendix}
+
+\begin{frame}{muzero-general}
+    \begin{figure}
+        \centering
+        \tikzset{%
+            cascaded/.style = {%
+                general shadow = {%
+                shadow scale = 1,
+                shadow xshift = -1ex,
+                shadow yshift = -1ex,
+                draw,
+                thick,
+                fill = white},
+                general shadow = {%
+                shadow scale = 1,
+                shadow xshift = -.5ex,
+                shadow yshift = -.5ex,
+                draw,
+                thick,
+                fill = white},
+                fill = white, 
+                draw,
+                thick,
+            }
+        }
+        \scalebox{.8}{
+            \begin{tikzpicture}[every node/.style={inner sep=0.3cm}]
+                \node [draw, rectangle] (reanalyze) {Reanalyze};
+                \node [draw, rectangle, below = of reanalyze] (replay) {Replay Buffer};
+                \node [draw, rectangle, below = 1.5cm of replay] (storage) {Shared Storage};
+                \node [draw, rectangle, left = 2.5cm of storage] (trainer) {Trainer};
+                \node [draw, rectangle, cascaded, right = 2.5cm of storage] (play) {Self Play};
+                \node [draw, rectangle, below = 1.5cm of storage] (tensorboard) {TensorBoard};
+
+                \draw [->] (reanalyze) edge [bend right] node[left] {update game history} (replay);
+                \draw [->] (replay) edge [bend right] node[right] {sample game history} (reanalyze);
+
+                \draw [->] (trainer) -- node[below right=-0.2cm] {update priorities} (replay);
+                \draw [->] (replay) edge [bend right] node[above left] {get batch} (trainer);
+                \draw [->] (trainer) -- node[below] {set weights} (storage);
+                \draw [->] (storage) -- node[below] {get weights} (play);
+                \draw [->] (play) -- node[above right] {save game history} (replay);
+
+                \draw [->] (storage) -- node[left] {get info} (tensorboard);
+            \end{tikzpicture}
+        }
+        \caption{The parallelized worker structure of muzero-general. \cite{muzero-general}}
+        \label{fig:muzero_general}
+    \end{figure}
+\end{frame}
