@@ -27,19 +27,25 @@
             \draw [->] (s1) -- node [below] {$g_\theta$} (s2);
             \draw [->] (s2) -- node [below] {$g_\theta$} (s3);
 
+            \pause
+
             \node [below right = 0.1 of ot] (notot) {$\hat{o}^0_t$};
+            \draw [->] (s0) edge [bend right] node [right] {$\reconstruction_\theta$} (notot);
+            \node [below right = -0.2 of ot] {\Lightning};
+
+            \pause
+
             \node [below right = 0.1 of otp1] (nototp1) {$\hat{o}^1_t$};
             \node [below right = 0.1 of otp2] (nototp2) {$\hat{o}^2_t$};
             \node [below right = 0.1 of otp3] (nototp3) {$\hat{o}^3_t$};
-            \node [below right = -0.2 of ot] {\Lightning};
-            \node [below right = -0.2 of otp1] {\Lightning};
-            \node [below right = -0.2 of otp2] {\Lightning};
-            \node [below right = -0.2 of otp3] {\Lightning};
 
-            \draw [->] (s0) edge [bend right] node [right] {$\reconstruction_\theta$} (notot);
             \draw [->] (s1) edge [bend right] node [right] {$\reconstruction_\theta$} (nototp1);
             \draw [->] (s2) edge [bend right] node [right] {$\reconstruction_\theta$} (nototp2);
             \draw [->] (s3) edge [bend right] node [right] {$\reconstruction_\theta$} (nototp3);
+
+            \node [below right = -0.2 of otp1] {\Lightning};
+            \node [below right = -0.2 of otp2] {\Lightning};
+            \node [below right = -0.2 of otp3] {\Lightning};
         \end{tikzpicture}
         \caption{The reconstruction function $\reconstruction_\theta$ being used to predict future observations $o_{t+k}$ from internal states $s^k$ with the help of the representation function $h_\theta$ as well as the dynamics function $g_\theta$.}
         \label{fig:reconstruction_function}
@@ -64,24 +70,35 @@
             \draw [->, dashed] (otp2) -- (otp3);
             \draw [->, dashed] (otp3) -- (otp4);
 
-            \node [below = 1.75 of ot] (s0) {$s^0_t$};
-            \node [below = 1.75 of otp1] (s1) {$s^1_t$};
-            \node [below = 1.75 of otp2] (s2) {$s^2_t$};
-            \node [below = 1.75 of otp3] (s3) {$s^3_t$};
+            \pause
 
+            \node [below = 1.75 of ot] (s0) {$s^0_t$};
             \draw [->] (ot) -- node [left] {$h_\theta$} (s0);
+
+            \pause
+
+            \node [below = 1.75 of otp1] (s1) {$s^1_t$};
             \draw [->] (s0) -- node [below] {$g_\theta$} (s1);
-            \draw [->] (s1) -- node [below] {$g_\theta$} (s2);
-            \draw [->] (s2) -- node [below] {$g_\theta$} (s3);
+
+            \pause
 
             \node [above right = 0.1 of s1] (nots1) {$s^0_{t+1}$};
             \node [above right = -0.25 of s1] {\Lightning};
+            \draw [->] (otp1) edge [bend right] node [left] {$h_\theta$} (nots1);
+
+            \pause
+
+            \node [below = 1.75 of otp2] (s2) {$s^2_t$};
+            \node [below = 1.75 of otp3] (s3) {$s^3_t$};
+
+            \draw [->] (s1) -- node [below] {$g_\theta$} (s2);
+            \draw [->] (s2) -- node [below] {$g_\theta$} (s3);
+
             \node [above right = 0.1 of s2] (nots2) {$s^0_{t+2}$};
             \node [above right = -0.25 of s2] {\Lightning};
             \node [above right = 0.1 of s3] (nots3) {$s^0_{t+3}$};
             \node [above right = -0.25 of s3] {\Lightning};
 
-            \draw [->] (otp1) edge [bend right] node [left] {$h_\theta$} (nots1);
             \draw [->] (otp2) edge [bend right] node [left] {$h_\theta$} (nots2);
             \draw [->] (otp3) edge [bend right] node [left] {$h_\theta$} (nots3);
         \end{tikzpicture}
