@@ -1,6 +1,9 @@
 main.pdf
 __latexindent_*
 
+## Theme
+*.sty
+
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
