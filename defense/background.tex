@@ -142,15 +142,19 @@
         \centering
         \begin{tikzpicture}
             \node [draw, circle] (s0) {$s^0$};
+
+            \pause
+
             \node [draw, circle, below left = of s0] (s1) {$s^1$};
             \node [draw, circle, below right = of s0] (s2) {$s^2$};
+            \draw [->] (s0) -- node[above left] {$a^1$} (s1);
+            \draw [->] (s0) -- node[above right] {$a^2$} (s2);
+
+            \pause
 
             \node [draw, circle, below left = of s2] (s3) {$s^3$};
             \node [draw, circle, below = of s2] (s4) {$s^4$};
             \node [draw, circle, below right = of s2] (s5) {$s^5$};
-
-            \draw [->] (s0) -- node[above left] {$a^1$} (s1);
-            \draw [->] (s0) -- node[above right] {$a^2$} (s2);
             \draw [->] (s2) -- node[above left] {$a^3$} (s3);
             \draw [->] (s2) -- node[right] {$a^4$} (s4);
             \draw [->] (s2) -- node[above right] {$a^5$} (s5);
