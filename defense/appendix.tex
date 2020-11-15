@@ -49,3 +49,77 @@
         \label{fig:muzero_general}
     \end{figure}
 \end{frame}
+
+\begin{frame}[allowframebreaks]{Hyperparameters}
+    \begin{table}
+        \centering
+        \scalebox{.7}{
+            \begin{tabular}{|c|l||c|c|}
+                \hline
+                & & CartPole-v1 & LunarLander-v2 \\
+                \hline\hline
+
+                & Training steps & $10000^*$ & $30000^*$ \\
+                \cline{2-4}
+                & Discount factor ($\gamma$) & 0.997 & 0.999 \\
+                \cline{2-4}
+                & TD steps ($n$) & 50 & 30 \\
+                \cline{2-4}
+                & Unroll steps ($K$) & 10 & 10 \\
+                \cline{2-4}
+                & Internal state dimensions & 8 & 10 \\
+                \cline{2-4}
+                & MuZero Reanalyze & Enabled & Enabled \\
+
+                \hline
+
+                \multirow{4.1}{*}{\begin{sideways}Losses\end{sideways}} & Optimizer & Adam & Adam \\
+                \cline{2-4}
+                & Learning rate ($\beta$) & $0.02 \times 0.9^{t \times 0.001}$ & 0.005 \\
+                \cline{2-4}
+                & Value loss weight & 1.0 & 1.0 \\
+                \cline{2-4}
+                & L2 regularization weight & $10^{-4}$ & $10^{-4}$ \\
+
+                \hline
+            \end{tabular}
+        }
+        \caption{Hyperparameter selection for all tested agents.}
+    \end{table}
+
+    \begin{table}
+        \centering
+        \scalebox{.7}{
+            \begin{tabular}{|c|l||c|c|}
+                \hline
+                & & CartPole-v1 & LunarLander-v2 \\
+                \hline\hline
+
+                \multirow{3.2}{*}{\begin{sideways}Replay\end{sideways}} & Replay buffer size & 500 & 2000 \\
+                \cline{2-4}
+                & Prioritization exponent & 0.5 & 0.5 \\
+                \cline{2-4}
+                & Batch size & 128 & 64 \\
+
+                \hline
+
+                \multirow{7.5}{*}{\begin{sideways}MCTS\end{sideways}} & Simulations & 50 & 50 \\
+                \cline{2-4}
+                & Dirichlet $\alpha$ & 0.25 & 0.25 \\
+                \cline{2-4}
+                & Exploration factor & 0.25 & 0.25 \\
+                \cline{2-4}
+                & pUCT $c_1$ & 1.25 & 1.25 \\
+                \cline{2-4}
+                & pUCT $c_2$ & 19652 & 19652 \\
+                \cline{2-4}
+                & Softmax temperature ($T$) & \makecell{
+                    1.0 if $t<5000$, \\ 0.5 if $5000 \leq t < 7500$, \\ 0.25 if $t \geq 7500$
+                } & 0.35 \\
+
+                \hline
+            \end{tabular}
+        }
+        \caption{Hyperparameter selection for all tested agents.}
+    \end{table}
+\end{frame}
