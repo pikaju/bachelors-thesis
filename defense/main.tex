@@ -1,5 +1,5 @@
 \documentclass{beamer}
-\usetheme{metropolis}
+% \usetheme{metropolis}
 
 \usepackage[english]{babel}
 \usepackage[utf8]{inputenc}
@@ -45,6 +45,13 @@
 \author{Julien Scholz}
 \date{November 17, 2020}
 \institute{Supervised by Dr. Cornelius Weber and Burhan Hafez}
+
+\addtobeamertemplate{navigation symbols}{}{%
+    \usebeamerfont{footline}%
+    \usebeamercolor[fg]{footline}%
+    \hspace{1em}%
+    \insertframenumber/\inserttotalframenumber
+}
 
 \begin{document}
 
