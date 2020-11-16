@@ -155,6 +155,16 @@
     \end{figure}
 \end{frame}
 
+\begin{frame}{MuZero's Loss Function}
+    \begin{equation*}
+        l_t(\theta) = \sum^K_{k=0} \left(l^r(u_{t+k}, r_t^k) + l^v(z_{t+k}, v_t^k) + l^p(\pi_{t+k}, \policy_t^k) + c||\theta||^2\right)
+    \end{equation*}
+    \begin{itemize}
+        \item Each model output has its own loss term
+        \item The model is unrolled through time during training
+    \end{itemize}
+\end{frame}
+
 \begin{frame}[fragile]{Monte-Carlo Tree Search}
     \begin{figure}
         \centering

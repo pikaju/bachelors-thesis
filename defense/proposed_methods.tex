@@ -50,6 +50,11 @@
         \caption{The reconstruction function $\reconstruction_\theta$ being used to predict future observations $o_{t+k}$ from internal states $s^k$ with the help of the representation function $h_\theta$ as well as the dynamics function $g_\theta$.}
         \label{fig:reconstruction_function}
     \end{figure}
+    \only<4>{
+        \begin{itemize}
+            \item Introduce a new loss term: $l^g(o_{t+k}, \hat{o}^k_t)$
+        \end{itemize}
+    }
 \end{frame}
 
 \subsection{Consistency Loss}
@@ -105,4 +110,9 @@
         \caption{Visualization of the discrepancy between state outputs of the dynamics function $g_\theta$ and representation function $h_\theta$.}
         \label{fig:consistency_loss}
     \end{figure}
+    \only<6>{
+        \begin{itemize}
+            \item Introduce a new loss term: $l^c(s^0_{t+k}, s^k_t)$
+        \end{itemize}
+    }
 \end{frame}
