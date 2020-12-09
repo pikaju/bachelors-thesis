@@ -91,6 +91,54 @@
     \end{figure}
 \end{frame}
 
+\begin{frame}[fragile]{Model-Based Reinforcement Learning}
+    \begin{figure}
+        \centering
+        \begin{tikzpicture}[node distance=0.6]
+            \node (St) {$S_t$};
+
+            \node [right = of St, draw, rectangle] (f1) {$f$};
+            \node [above = of f1] (At) {$\hat{A}_t$};
+            \node [below = of f1] (Rtp1) {$\hat{R}_{t+1}$};
+
+            \node [right = of f1] (Stp1) {$\hat{S}_{t+1}$};
+
+            \node [right = of Stp1, draw, rectangle] (f2) {$f$};
+            \node [above = of f2] (Atp1) {$\hat{A}_{t+1}$};
+            \node [below = of f2] (Rtp2) {$\hat{R}_{t+2}$};
+
+            \node [right = of f2] (Stp2) {$\hat{S}_{t+2}$};
+
+            \node [right = of Stp2] (dots) {$\dots$};
+
+            \node [right = of dots, draw, rectangle] (f3) {$f$};
+            \node [above = of f3] (Atpnm1) {$\hat{A}_{t+n-1}$};
+            \node [below = of f3] (Rtpn) {$\hat{R}_{t+n}$};
+
+            \node [right = of f3] (Stpn) {$\hat{S}_{t+n}$};
+
+            \draw [->] (St) -- (f1);
+            \draw [->] (At) -- (f1);
+            \draw [->] (f1) -- (Rtp1);
+            \draw [->] (f1) -- (Stp1);
+
+            \draw [->] (Stp1) -- (f2);
+            \draw [->] (Atp1) -- (f2);
+            \draw [->] (f2) -- (Rtp2);
+            \draw [->] (f2) -- (Stp2);
+
+            \draw [->] (Stp2) -- (dots);
+            \draw [->] (dots) -- (f3);
+
+            \draw [->] (Atpnm1) -- (f3);
+            \draw [->] (f3) -- (Rtpn);
+            \draw [->] (f3) -- (Stpn);
+        \end{tikzpicture}
+        \caption{An environment model $f$ being applied recursively to predict the outcome of a trajectory. \nocite{bible, model}}
+        \label{fig:recursive_model}
+    \end{figure}
+\end{frame}
+
 \subsection{MuZero Algorithm}
 
 \begin{frame}[fragile]{MuZero Algorithm}
